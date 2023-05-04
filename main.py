@@ -9,9 +9,9 @@ class App(tk.Tk):
         self.backend = Backend()
         self.init_window()
 
-        self.background_images : list[int] = []
         self.update_used_assets()
 
+        self.background_images : list[int] = []
         self.init_background()
         self.scroll_background()
 

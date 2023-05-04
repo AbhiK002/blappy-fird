@@ -20,7 +20,7 @@ class Backend:
 
     creator_root_directory = "AbhineetKelley"
     game_directory = "BlappyFird"
-    assets_directory = Path("assets")
+    settings_directory = Path("assets")
 
     DEFAULT_BACKGROUND = resource_path(assets_directory / "bg" / "1_skybg.png")
     DEFAULT_BIRD = resource_path(assets_directory / "birds" / "1_bird.png")
@@ -48,9 +48,9 @@ class Backend:
         else:
             current_root_directory = self.root_directory
 
-        self.assets_directory = current_root_directory / self.creator_root_directory / self.game_directory
+        self.settings_directory = current_root_directory / self.creator_root_directory / self.game_directory
         try:
-            self.assets_directory.mkdir(parents=True, exist_ok=True)
+            self.settings_directory.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             self.classic_game_mode = True
 
