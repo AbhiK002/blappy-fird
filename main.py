@@ -5,7 +5,11 @@ from backend import Backend
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.bird_paused = True
+        self.gravity_enabled = False
+
+        self.main_menu_screen = True
+        self.ready_to_go = False
+
         self.backend = Backend()
         self.init_window()
 
@@ -16,6 +20,7 @@ class App(tk.Tk):
         self.scroll_background()
 
         self.init_bird()
+        self.init_buttons()
 
         self.mainloop()
 
@@ -71,6 +76,7 @@ class App(tk.Tk):
     def init_bird(self):
         bird_img = self.bird_img
         self.bird_canvas_image = self.canvas.create_image(150, 200, image=bird_img)
+        self.canvas.moveto(self.bird_canvas_image, 150, 200)
 
         self.bird_velocity = 0
         self.gravity_acceleration = 0.6
@@ -81,30 +87,71 @@ class App(tk.Tk):
         self.make_bird_fall()
 
     def make_bird_fall(self):
-        if self.bird_paused:
+        if not self.gravity_enabled:
             return
 
         self.bird_velocity += self.gravity_acceleration
-        if self.bird_velocity > 9:
-            self.bird_velocity = 9
+        if self.bird_velocity > 8:
+            self.bird_velocity = 8
 
         self.canvas.move(self.bird_canvas_image, 0, self.bird_velocity)
 
         y_coords = self.canvas.coords(self.bird_canvas_image)[1]
         if y_coords >= 470:
-            self.bird_paused = True
             self.game_over()
 
         self.after(self.gravity_interval, self.make_bird_fall)
 
     def make_bird_jump(self):
+        if self.main_menu_screen:  # user presses PLAY
+            return
+
+        if self.ready_to_go:
+            self.ready_to_go = False  # game starts
+            return
+
         self.bird_velocity = -12
-        if self.bird_paused:
-            self.bird_paused = False
-            self.make_bird_fall()
+        if not self.gravity_enabled:
+            self.enable_gravity()
+
+    def init_buttons(self):
+        self.playbutton, self.exitbutton = self.backend.get_buttons_images()
+
+        self.playimage_button = self.canvas.create_image(300, 200, image=self.playbutton)
+        self.exitimage_button = self.canvas.create_image(300, 300, image=self.exitbutton)
+
+        self.canvas.tag_bind(self.playimage_button, '<Button-1>', lambda e: self.start_game())
+        self.canvas.tag_bind(self.exitimage_button, '<Button-1>', lambda e: self.end_game())
+
+    def hide_buttons(self):
+        self.canvas.itemconfigure(self.playimage_button, state='hidden')
+        self.canvas.itemconfigure(self.exitimage_button, state='hidden')
+
+    def show_buttons(self):
+        self.canvas.itemconfigure(self.playimage_button, state='normal')
+        self.canvas.itemconfigure(self.exitimage_button, state='normal')
 
     def game_over(self):
-        pass
+        self.disable_gravity()
+        self.ready_to_go = False
+        self.main_menu_screen = True
+        self.show_buttons()
+
+    def start_game(self):
+        self.hide_buttons()
+        self.canvas.moveto(self.bird_canvas_image, 150, 200)
+        self.ready_to_go = True
+        self.main_menu_screen = False
+
+    def end_game(self):
+        self.destroy()
+
+    def disable_gravity(self):
+        self.gravity_enabled = False
+
+    def enable_gravity(self):
+        self.gravity_enabled = True
+        self.make_bird_fall()
 
 
 if __name__ == '__main__':

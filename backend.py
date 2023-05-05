@@ -20,20 +20,22 @@ class Backend:
 
     creator_root_directory = "AbhineetKelley"
     game_directory = "BlappyFird"
-    settings_directory = Path("assets")
+    assets_directory = Path("assets")
 
-    DEFAULT_BACKGROUND = resource_path(settings_directory / "bg" / "1_skybg.png")
-    DEFAULT_BIRD = resource_path(settings_directory / "birds" / "1_bird.png")
+    DEFAULT_BACKGROUND = resource_path(assets_directory / "bg" / "1_skybg.png")
+    DEFAULT_BIRD = resource_path(assets_directory / "birds" / "1_bird.png")
     # DEFAULT_PILLARS = resource_path()
 
-    def __init__(self):
-        self.backgrounds = []
-        self.birds = []
-        self.poles = []
+    PLAY_BUTTON = resource_path(assets_directory / "play.png")
+    EXIT_BUTTON = resource_path(assets_directory / "exit.png")
 
+    def __init__(self):
         self.game_background_image = self.DEFAULT_BACKGROUND
         self.game_player_image = self.DEFAULT_BIRD
         self.game_pillar_image = None
+
+        self.play_button = self.PLAY_BUTTON
+        self.exit_button = self.EXIT_BUTTON
 
         self.user_has_windows = True if "win" in platform.system().lower() else False
 
@@ -54,18 +56,12 @@ class Backend:
         except Exception as e:
             self.classic_game_mode = True
 
-    def read_and_sync_settings(self): pass
-
-    def read_and_sync_assets(self): pass
-
-    def save_settings(self): pass
-
     def get_current_bg_image(self):
         try:
             img = PhotoImage(file=self.game_background_image)
             return img
         except Exception:
-            print("image doesn't exist")
+            print("bg image doesn't exist")
             return PhotoImage(file=self.DEFAULT_BACKGROUND)
 
     def get_current_player_image(self):
@@ -73,6 +69,15 @@ class Backend:
             img = PhotoImage(file=self.game_player_image)
             return img
         except Exception:
-            print("image doesn't exist")
+            print("player image doesn't exist")
             return PhotoImage(file=self.DEFAULT_BIRD)
+
+    def get_buttons_images(self) -> list[PhotoImage] | None:
+        try:
+            img1 = PhotoImage(file=self.play_button)
+            img2 = PhotoImage(file=self.exit_button)
+            return [img1, img2]
+        except Exception:
+            print("buttons images don't exist")
+            return None
 
