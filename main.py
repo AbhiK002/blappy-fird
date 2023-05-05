@@ -25,6 +25,9 @@ class App(tk.Tk):
         self.score = 0
         self.init_scoreboard()
 
+        self.pillars_currently_visible = []
+        self.init_pillars()
+
         self.mainloop()
 
     def init_window(self):
@@ -78,8 +81,8 @@ class App(tk.Tk):
 
     def init_bird(self):
         bird_img = self.bird_img
-        self.bird_canvas_image = self.canvas.create_image(150, 200, image=bird_img)
-        self.canvas.moveto(self.bird_canvas_image, 150, 200)
+        self.bird_canvas_image = self.canvas.create_image(200, 200, image=bird_img)
+        self.canvas.moveto(self.bird_canvas_image, 200, 200)
 
         self.bird_velocity = 0
         self.gravity_acceleration = 0.6
@@ -116,6 +119,7 @@ class App(tk.Tk):
         self.bird_velocity = -10.5
         if not self.gravity_enabled:
             self.enable_gravity()
+            self.start_spawning_pillars()
 
     def init_buttons(self):
         self.playbutton, self.exitbutton = self.backend.get_buttons_images()
@@ -142,11 +146,12 @@ class App(tk.Tk):
 
     def start_game(self):
         self.hide_buttons()
-        self.canvas.moveto(self.bird_canvas_image, 150, 200)
+        self.canvas.moveto(self.bird_canvas_image, 200, 200)
         self.ready_to_go = True
         self.main_menu_screen = False
         self.update_scoreboard(reset=True)
         self.canvas.itemconfigure(self.scoreboard, state='normal')
+        self.despawn_all_pillars()
 
     def end_game(self):
         self.canvas.delete(self.scoreboard)
@@ -170,6 +175,60 @@ class App(tk.Tk):
             self.score = 0
 
         self.canvas.itemconfigure(self.scoreboard, text=f'{self.score}')
+
+    def init_pillars(self):
+        self.pillar_spawnpoint_x = 700
+        self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
+
+        self.spawn_pillar()
+
+    def spawn_pillar(self):
+        self.pillar_up_canvas = self.canvas.create_image(self.pillar_spawnpoint_x, 0, image=self.pillar_up_image)
+        self.pillar_down_canvas = self.canvas.create_image(self.pillar_spawnpoint_x, 570, image=self.pillar_down_image)
+
+        self.pillars_currently_visible.append([self.pillar_up_canvas, self.pillar_down_canvas])
+
+    def despawn_unseen_pillar(self):
+        first_pillar_up, first_pillar_down = self.pillars_currently_visible[0]
+        xcoord_up, _ = self.canvas.coords(first_pillar_up)
+
+        if xcoord_up <= -150:
+            self.canvas.delete(first_pillar_up, first_pillar_down)
+            self.pillars_currently_visible.pop(0)
+
+    def move_pillars(self):
+        if self.main_menu_screen or self.ready_to_go:
+            return
+
+        for pillar_up, pillar_down in self.pillars_currently_visible:
+            self.canvas.move(pillar_up, -3, 0)
+            self.canvas.move(pillar_down, -3, 0)
+
+        self.after(15, self.move_pillars)
+
+    def keep_spawning_pillars(self):
+        if self.main_menu_screen or self.ready_to_go:
+            return
+
+        last_pillar_up, last_pillar_down = self.pillars_currently_visible[-1]
+        xcoord_up, _ = self.canvas.coords(last_pillar_up)
+
+        if self.pillar_spawnpoint_x - xcoord_up >= 300:
+            self.spawn_pillar()
+            self.despawn_unseen_pillar()
+
+        self.after(20, self.keep_spawning_pillars)
+
+    def start_spawning_pillars(self):
+        self.move_pillars()
+        self.keep_spawning_pillars()
+
+    def despawn_all_pillars(self):
+        for pilup, pildown in self.pillars_currently_visible:
+            self.canvas.delete(pilup, pildown)
+
+        self.pillars_currently_visible = []
+        self.spawn_pillar()
 
 
 if __name__ == '__main__':

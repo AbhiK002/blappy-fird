@@ -24,7 +24,8 @@ class Backend:
 
     DEFAULT_BACKGROUND = resource_path(assets_directory / "bg" / "1_skybg.png")
     DEFAULT_BIRD = resource_path(assets_directory / "birds" / "1_bird.png")
-    # DEFAULT_PILLARS = resource_path()
+    DEFAULT_PILLAR_UP = resource_path(assets_directory / "pillars" / "1_pillar_up.png")
+    DEFAULT_PILLAR_DOWN = resource_path(assets_directory / "pillars" / "1_pillar_down.png")
 
     PLAY_BUTTON = resource_path(assets_directory / "play.png")
     EXIT_BUTTON = resource_path(assets_directory / "exit.png")
@@ -32,7 +33,8 @@ class Backend:
     def __init__(self):
         self.game_background_image = self.DEFAULT_BACKGROUND
         self.game_player_image = self.DEFAULT_BIRD
-        self.game_pillar_image = None
+        self.game_pillar_up_image = self.DEFAULT_PILLAR_UP
+        self.game_pillar_down_image = self.DEFAULT_PILLAR_DOWN
 
         self.play_button = self.PLAY_BUTTON
         self.exit_button = self.EXIT_BUTTON
@@ -58,19 +60,28 @@ class Backend:
 
     def get_current_bg_image(self):
         try:
-            img = PhotoImage(file=self.game_background_image)
-            return img
+            return PhotoImage(file=self.game_background_image)
         except Exception:
             print("bg image doesn't exist")
             return PhotoImage(file=self.DEFAULT_BACKGROUND)
 
     def get_current_player_image(self):
         try:
-            img = PhotoImage(file=self.game_player_image)
-            return img
+            return PhotoImage(file=self.game_player_image)
         except Exception:
             print("player image doesn't exist")
             return PhotoImage(file=self.DEFAULT_BIRD)
+
+    def get_current_pillar_images(self) -> list[PhotoImage]:
+        try:
+            img1 = PhotoImage(file=self.game_pillar_up_image)
+            img2 = PhotoImage(file=self.game_pillar_down_image)
+            return [img1, img2]
+        except Exception:
+            print("buttons images don't exist")
+            img1 = PhotoImage(file=self.DEFAULT_PILLAR_UP)
+            img2 = PhotoImage(file=self.DEFAULT_PILLAR_DOWN)
+            return [img1, img2]
 
     def get_buttons_images(self) -> list[PhotoImage] | None:
         try:
