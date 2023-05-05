@@ -67,7 +67,7 @@ class App(tk.Tk):
         old_x_of_first_img = self.canvas.coords(self.background_images[0])[0]
 
         if old_x_of_first_img < -self.game_window_width-2:
-            print("shifted")
+            # print("shifted")
             increment = 2*self.game_window_width - 5
             self.canvas.move(self.background_images[0], increment, 0)
 
@@ -146,7 +146,7 @@ class App(tk.Tk):
         self.ready_to_go = False
         self.main_menu_screen = True
         self.disable_gravity()
-        self.after(50, self.show_buttons)
+        self.after(200, self.show_buttons)
         self.canvas.lift(self.scoreboard)
 
     def start_game(self):
@@ -185,7 +185,7 @@ class App(tk.Tk):
         self.pillar_spawnpoint_x = 700
         self.pillar_distance = 300
         self.pillar_height = 400
-        self.pillar_hole_gap = 170
+        self.pillar_hole_gap = 165
 
         self.STANDARD_PILLAR_UP_Y = (self.game_window_height - self.pillar_hole_gap)/2 - self.pillar_height
         self.STANDARD_PILLAR_DOWN_Y = self.STANDARD_PILLAR_UP_Y + self.pillar_height + self.pillar_hole_gap
@@ -215,7 +215,7 @@ class App(tk.Tk):
         temp = self.pillars_currently_visible.pop(0)
         self.pillars_currently_visible.append(temp)
 
-        print("shifted", self.pillars_currently_visible)
+        # print("shifted", self.pillars_currently_visible)
 
     def move_pillars(self):
         if self.main_menu_screen or self.ready_to_go:
@@ -234,8 +234,8 @@ class App(tk.Tk):
         last_pillar_up, last_pillar_down = self.pillars_currently_visible[-1]
         xcoord_up, _ = self.canvas.coords(last_pillar_up)
 
-        if self.pillar_spawnpoint_x - xcoord_up >= self.pillar_distance:
-            print("spawned", self.pillars_currently_visible)
+        if self.pillar_spawnpoint_x - xcoord_up >= self.pillar_distance - 50:
+            # print("spawned", self.pillars_currently_visible)
             self.shift_unseen_pillar()
 
         self.after(50, self.keep_spawning_pillars)
