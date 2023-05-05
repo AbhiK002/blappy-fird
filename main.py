@@ -22,6 +22,9 @@ class App(tk.Tk):
         self.init_bird()
         self.init_buttons()
 
+        self.score = 0
+        self.init_scoreboard()
+
         self.mainloop()
 
     def init_window(self):
@@ -91,8 +94,8 @@ class App(tk.Tk):
             return
 
         self.bird_velocity += self.gravity_acceleration
-        if self.bird_velocity > 8:
-            self.bird_velocity = 8
+        if self.bird_velocity > 9:
+            self.bird_velocity = 9
 
         self.canvas.move(self.bird_canvas_image, 0, self.bird_velocity)
 
@@ -110,15 +113,15 @@ class App(tk.Tk):
             self.ready_to_go = False  # game starts
             return
 
-        self.bird_velocity = -12
+        self.bird_velocity = -10.5
         if not self.gravity_enabled:
             self.enable_gravity()
 
     def init_buttons(self):
         self.playbutton, self.exitbutton = self.backend.get_buttons_images()
 
-        self.playimage_button = self.canvas.create_image(300, 200, image=self.playbutton)
-        self.exitimage_button = self.canvas.create_image(300, 300, image=self.exitbutton)
+        self.playimage_button = self.canvas.create_image(300, 260, image=self.playbutton)
+        self.exitimage_button = self.canvas.create_image(300, 320, image=self.exitbutton)
 
         self.canvas.tag_bind(self.playimage_button, '<Button-1>', lambda e: self.start_game())
         self.canvas.tag_bind(self.exitimage_button, '<Button-1>', lambda e: self.end_game())
@@ -132,9 +135,9 @@ class App(tk.Tk):
         self.canvas.itemconfigure(self.exitimage_button, state='normal')
 
     def game_over(self):
-        self.disable_gravity()
         self.ready_to_go = False
         self.main_menu_screen = True
+        self.disable_gravity()
         self.show_buttons()
 
     def start_game(self):
@@ -142,9 +145,14 @@ class App(tk.Tk):
         self.canvas.moveto(self.bird_canvas_image, 150, 200)
         self.ready_to_go = True
         self.main_menu_screen = False
+        self.update_scoreboard(reset=True)
+        self.canvas.itemconfigure(self.scoreboard, state='normal')
 
     def end_game(self):
-        self.destroy()
+        self.canvas.delete(self.scoreboard)
+        self.gravity_enabled = True
+        self.make_bird_fall()
+        self.after(800, self.destroy)
 
     def disable_gravity(self):
         self.gravity_enabled = False
@@ -152,6 +160,16 @@ class App(tk.Tk):
     def enable_gravity(self):
         self.gravity_enabled = True
         self.make_bird_fall()
+
+    def init_scoreboard(self):
+        self.scoreboard = self.canvas.create_text(300, 50, text=f"{self.score}", font=("Calibri", 48, "bold"), state='hidden')
+
+    def update_scoreboard(self, reset=False):
+        self.score += 1
+        if reset:
+            self.score = 0
+
+        self.canvas.itemconfigure(self.scoreboard, text=f'{self.score}')
 
 
 if __name__ == '__main__':
