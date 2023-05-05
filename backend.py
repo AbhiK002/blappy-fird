@@ -22,8 +22,8 @@ class Backend:
     game_directory = "BlappyFird"
     settings_directory = Path("assets")
 
-    DEFAULT_BACKGROUND = resource_path(assets_directory / "bg" / "1_skybg.png")
-    DEFAULT_BIRD = resource_path(assets_directory / "birds" / "1_bird.png")
+    DEFAULT_BACKGROUND = resource_path(settings_directory / "bg" / "1_skybg.png")
+    DEFAULT_BIRD = resource_path(settings_directory / "birds" / "1_bird.png")
     # DEFAULT_PILLARS = resource_path()
 
     def __init__(self):

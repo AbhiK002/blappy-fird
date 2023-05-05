@@ -76,7 +76,6 @@ class App(tk.Tk):
         self.gravity_acceleration = 0.6
         self.gravity_interval = 15
 
-
         self.bind("<Button-1>", lambda e: self.make_bird_jump())
 
         self.make_bird_fall()
@@ -86,8 +85,8 @@ class App(tk.Tk):
             return
 
         self.bird_velocity += self.gravity_acceleration
-        if self.bird_velocity > 12:
-            self.bird_velocity = 12
+        if self.bird_velocity > 9:
+            self.bird_velocity = 9
 
         self.canvas.move(self.bird_canvas_image, 0, self.bird_velocity)
 
