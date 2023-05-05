@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 from backend import Backend
 
@@ -22,11 +23,12 @@ class App(tk.Tk):
         self.init_bird()
         self.init_buttons()
 
-        self.score = 0
-        self.init_scoreboard()
 
         self.pillars_currently_visible = []
         self.init_pillars()
+
+        self.score = 0
+        self.init_scoreboard()
 
         self.mainloop()
 
@@ -124,8 +126,8 @@ class App(tk.Tk):
     def init_buttons(self):
         self.playbutton, self.exitbutton = self.backend.get_buttons_images()
 
-        self.playimage_button = self.canvas.create_image(300, 260, image=self.playbutton)
-        self.exitimage_button = self.canvas.create_image(300, 320, image=self.exitbutton)
+        self.playimage_button = self.canvas.create_image(300, 290, image=self.playbutton)
+        self.exitimage_button = self.canvas.create_image(300, 350, image=self.exitbutton)
 
         self.canvas.tag_bind(self.playimage_button, '<Button-1>', lambda e: self.start_game())
         self.canvas.tag_bind(self.exitimage_button, '<Button-1>', lambda e: self.end_game())
@@ -137,12 +139,15 @@ class App(tk.Tk):
     def show_buttons(self):
         self.canvas.itemconfigure(self.playimage_button, state='normal')
         self.canvas.itemconfigure(self.exitimage_button, state='normal')
+        self.canvas.lift(self.playimage_button)
+        self.canvas.lift(self.exitimage_button)
 
     def game_over(self):
         self.ready_to_go = False
         self.main_menu_screen = True
         self.disable_gravity()
-        self.show_buttons()
+        self.after(50, self.show_buttons)
+        self.canvas.lift(self.scoreboard)
 
     def start_game(self):
         self.hide_buttons()
@@ -178,23 +183,39 @@ class App(tk.Tk):
 
     def init_pillars(self):
         self.pillar_spawnpoint_x = 700
+        self.pillar_distance = 300
+        self.pillar_height = 400
+        self.pillar_hole_gap = 170
+
+        self.STANDARD_PILLAR_UP_Y = (self.game_window_height - self.pillar_hole_gap)/2 - self.pillar_height
+        self.STANDARD_PILLAR_DOWN_Y = self.STANDARD_PILLAR_UP_Y + self.pillar_height + self.pillar_hole_gap
+
         self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
 
-        self.spawn_pillar()
+    def spawn_pillars(self):
+        for i in range(3):
+            pillar_up_canvas = self.canvas.create_image(-200, 0, image=self.pillar_up_image)
+            pillar_down_canvas = self.canvas.create_image(-200, 0, image=self.pillar_down_image)
 
-    def spawn_pillar(self):
-        self.pillar_up_canvas = self.canvas.create_image(self.pillar_spawnpoint_x, 0, image=self.pillar_up_image)
-        self.pillar_down_canvas = self.canvas.create_image(self.pillar_spawnpoint_x, 570, image=self.pillar_down_image)
+            random_shift = random.randint(-10, 10) * 10
 
-        self.pillars_currently_visible.append([self.pillar_up_canvas, self.pillar_down_canvas])
+            self.canvas.moveto(pillar_up_canvas, self.pillar_spawnpoint_x + self.pillar_distance*i, self.STANDARD_PILLAR_UP_Y + random_shift)
+            self.canvas.moveto(pillar_down_canvas, self.pillar_spawnpoint_x + self.pillar_distance*i, self.STANDARD_PILLAR_DOWN_Y + random_shift)
 
-    def despawn_unseen_pillar(self):
+            self.pillars_currently_visible.append([pillar_up_canvas, pillar_down_canvas])
+
+    def shift_unseen_pillar(self):
         first_pillar_up, first_pillar_down = self.pillars_currently_visible[0]
         xcoord_up, _ = self.canvas.coords(first_pillar_up)
 
-        if xcoord_up <= -150:
-            self.canvas.delete(first_pillar_up, first_pillar_down)
-            self.pillars_currently_visible.pop(0)
+        random_shift = random.randint(-10, 10) * 10
+
+        self.canvas.moveto(first_pillar_up, self.pillar_spawnpoint_x, self.STANDARD_PILLAR_UP_Y + random_shift)
+        self.canvas.moveto(first_pillar_down, self.pillar_spawnpoint_x, self.STANDARD_PILLAR_DOWN_Y + random_shift)
+        temp = self.pillars_currently_visible.pop(0)
+        self.pillars_currently_visible.append(temp)
+
+        print("shifted", self.pillars_currently_visible)
 
     def move_pillars(self):
         if self.main_menu_screen or self.ready_to_go:
@@ -204,7 +225,7 @@ class App(tk.Tk):
             self.canvas.move(pillar_up, -3, 0)
             self.canvas.move(pillar_down, -3, 0)
 
-        self.after(15, self.move_pillars)
+        self.after(10, self.move_pillars)
 
     def keep_spawning_pillars(self):
         if self.main_menu_screen or self.ready_to_go:
@@ -213,22 +234,26 @@ class App(tk.Tk):
         last_pillar_up, last_pillar_down = self.pillars_currently_visible[-1]
         xcoord_up, _ = self.canvas.coords(last_pillar_up)
 
-        if self.pillar_spawnpoint_x - xcoord_up >= 300:
-            self.spawn_pillar()
-            self.despawn_unseen_pillar()
+        if self.pillar_spawnpoint_x - xcoord_up >= self.pillar_distance:
+            print("spawned", self.pillars_currently_visible)
+            self.shift_unseen_pillar()
 
-        self.after(20, self.keep_spawning_pillars)
+        self.after(50, self.keep_spawning_pillars)
 
     def start_spawning_pillars(self):
         self.move_pillars()
         self.keep_spawning_pillars()
+        self.check_pillar_for_score()
 
     def despawn_all_pillars(self):
         for pilup, pildown in self.pillars_currently_visible:
             self.canvas.delete(pilup, pildown)
 
         self.pillars_currently_visible = []
-        self.spawn_pillar()
+        self.spawn_pillars()
+
+    def check_pillar_for_score(self):
+        pass
 
 
 if __name__ == '__main__':
