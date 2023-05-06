@@ -1,11 +1,13 @@
 # Blappy Fird
 A remake by Abhineet Kelley of the classic game Flappy Bird, for a fun learning experience
 
-# Introduction
+# 1. Introduction
 Welcome to Blappy Fird, a remake of the classic game 'Flappy Bird' with a few more features like customisable backgrounds, etc. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
 
-# About the Game
-## Rules
+(user documentation to be added here)
+
+# 2. About the Game
+## 2.1 Rules
 This game contains the classic gameplay of the original game, in addition to some things I added myself.
 The rules are simple:
 - Click or press SPACEBAR to make the bird hop
@@ -14,13 +16,13 @@ The rules are simple:
 - If you touch the ground or any obstacle, you lose
 - Reach the highest score you can
 
-### Extra features
+### 2.1.1 Extra features
 - None yet, will be added soon
 
-# Technical Stuff
+# 3. Technical Details
 Blappy Fird has been made using the Python language and tkinter has been used for the GUI of the game. I used tkinter because the game doesn't have advanced graphics or mechanisms that require complex frameworks like PyQt5.
 
-## Libraries/Modules Used
+## 3.1 Libraries/Modules Used
 - `tkinter`: To make the GUI of the game.
 - `random`: To generate random values used for the obstacles in the game
 - `pathlib`: Generating cross-platform folder/file paths since different operating systems have different path representations (`/` or `\\`)
@@ -28,7 +30,7 @@ Blappy Fird has been made using the Python language and tkinter has been used fo
 - `sys`: Same usage as `os`
 - `platform`: To check the user's operating system
 
-## Game Directory Structure
+## 3.2 Game Directory Structure
 - For Windows, the game's user data, which is stuff like settings, etc is located at:
   - `C:\Users\<user>\AppData\Local\AbhineetKelley\BlappyFird\`
 which is equivalent to
@@ -39,7 +41,7 @@ which is equivalent to
   - `~/AbhineetKelley/BlappyFird/`  
     where `~` represents the OS's respective home directory
 
-### Code Structure
+### 3.2.1 Code Structure
 Alright, so the game's source code directory looks like this:
 
 ```
@@ -71,8 +73,8 @@ Details about each file/folder:
 
 After the game has been converted into an exe file, the 2 python files will become 1 exe file instead. Also, the default images will get embedded into the exe file itself so that the game doesn't crash in case it doesn't find any of the image files/assets.
 
-# How Blappy Fird Works
-## Overview
+# 4. How Blappy Fird Works
+### 4.0.1 Overview
 Blappy Fird is a fun little game and therefore has a simple working mechanism. It basically has 3 states/scenes:
 - Main Menu
   - ACTIVE when the bird dies, or user starts the game 
@@ -104,14 +106,14 @@ This is how the game works on the outside. Now, for the inside part I will expla
 
 NOTE: the `tkinter` library will be referred to as `tk` in the entire documentation, since I imported it with the alias `tk` in the source code
 
-## Starting the game
+## 4.1 Starting the game
 These are some important details to remember about the game's GUI:
 - The game window only has a single `tk.Canvas` widget that covers the entire window area
 - All the things you see on the screen are image files drawn onto the canvas widget itself
 - I will refer to the `tk.Canvas` widget as "the canvas" throughout the documentation
   - no confusion, since there's only 1 canvas in the entire source code
 
-### Run main.py
+### 4.1.1 Run main.py
 To start the game, we run `main.py`, that contains a class named `App` which will then be initialised in the main block inside the file.
 ```python
 import tkinter as tk
@@ -170,7 +172,7 @@ Here are the things that happen inside the `__init__()` method of `App` class:
 Once these methods have been called, the game now waits for the user to click on any of the buttons and eventually play the game.
 Each and every function present in the code is explained in detail later in this document.
 
-### Inside backend.py
+### 4.1.2 Inside backend.py
 If you don't remember (although it's only a few lines up), we initialised the `Backend` class inside the `__init__` method of `App` class. 
 
 Now, here are the things that happen inside the `__init__` method of `Backend` class that is present inside the `backend.py` file:
@@ -187,7 +189,7 @@ class Backend:
         # normal stuff here
         pass
 ```
-#### Prepatory Stuff
+#### 4.1.2.1 Prepatory Stuff
 Inside the `Backend` class definition, these class attributes are defined:
 - `root_directory` (Path object): contains the path to the home directory of the user, which will become the root directory for the game's user data directory
   - something like `C:\Users\YOURNAME\` in Windows
@@ -242,7 +244,7 @@ Path("/home/YOURNAME/AbhineetKelley/BlappyFird")
 ```
 
 
-#### Normal Stuff
+#### 4.1.2.2 Normal Stuff
 These things in particular happen inside the `__init__` method of `Backend` class:
 - three variables that will store the currently used game assets are initialised:
   - `game_background_image`: initialised to `DEFAULT_BACKGROUND`
@@ -268,10 +270,10 @@ These things in particular happen inside the `__init__` method of `Backend` clas
 This is a summary of what happens when the `__init__` methods of both the classes `App` and `Backend` are called, when the game is started.
 Now that the game has started, what happens next?
 
-## Running the game
+## 4.2 Running the game
 Now that the game has started, each method will do its job in making the code alive and visible on the screen.
 
-### Summary
+### 4.2.1 Summary
 The 'Running the game' section will explain each method of both the classes in detail, in addition to the sequence by which the methods are called and what all happens.
 
 Before I go into detail, here's an overview of how the game works:
