@@ -9,7 +9,7 @@ class App(tk.Tk):
         self.gravity_enabled = False
 
         self.main_menu_screen = True
-        self.ready_to_go = False
+        self.game_state = 'ready'
 
         self.backend = Backend()
         self.init_window()
@@ -53,7 +53,7 @@ class App(tk.Tk):
     def update_used_assets(self):
         self.bg_img = self.backend.get_current_bg_image()
         self.bird_img = self.backend.get_current_player_image()
-        # self.pillar_img = self.backend
+        self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
 
     def init_background(self):
         bg_img1 = self.canvas.create_image(0, 0, image=self.bg_img, anchor=tk.NW)
@@ -143,7 +143,7 @@ class App(tk.Tk):
         self.canvas.lift(self.exitimage_button)
 
     def game_over(self):
-        self.ready_to_go = False
+        self.game_state = 'stopped'
         self.main_menu_screen = True
         self.disable_gravity()
         self.after(200, self.show_buttons)
@@ -189,8 +189,6 @@ class App(tk.Tk):
 
         self.STANDARD_PILLAR_UP_Y = (self.game_window_height - self.pillar_hole_gap)/2 - self.pillar_height
         self.STANDARD_PILLAR_DOWN_Y = self.STANDARD_PILLAR_UP_Y + self.pillar_height + self.pillar_hole_gap
-
-        self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
 
     def spawn_pillars(self):
         for i in range(3):
@@ -253,7 +251,8 @@ class App(tk.Tk):
         self.spawn_pillars()
 
     def check_pillar_for_score(self):
-        pass
+        pilup, pildown = self.pillars_currently_visible[0]
+        pilup2, pildown2 = self.pillars_currently_visible[1]
 
 
 if __name__ == '__main__':
