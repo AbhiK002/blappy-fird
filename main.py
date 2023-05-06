@@ -92,7 +92,30 @@ class App(tk.Tk):
         self.bottom_death_limit = 470  # coords below which the bird dies, for ground death
 
         self.bind("<Button-1>", lambda e: self.make_bird_hop())
-        # left click event binded to the game window
+        self.bind("<space>", lambda e: self.make_bird_hop())
+        # left click and spacebar events binded to the game window
+
+        self.idle_interrupt = False
+        self.idle_animation_active = True
+        self.idle_pixel_count = 0
+        self.idle_increment = 2
+        self.idle_bird_animation()
+
+    def idle_bird_animation(self):
+        if self.idle_interrupt:
+            self.idle_interrupt = False
+            self.idle_animation_active = False
+            return
+
+        self.idle_animation_active = True
+        self.canvas.move(self.bird_canvas_image, 0, self.idle_increment)
+        self.idle_pixel_count += 1
+
+        if self.idle_pixel_count > 15:
+            self.idle_increment *= -1
+            self.idle_pixel_count = 0
+
+        self.after(50, self.idle_bird_animation)
 
     def make_bird_fall(self):
         if not self.gravity_enabled:
@@ -103,12 +126,6 @@ class App(tk.Tk):
 
         self.canvas.move(self.bird_canvas_image, 0, self.bird_velocity)
         # moves the bird in y direction by the current velocity amount of pixels
-
-        _, y_coords = self.canvas.coords(self.bird_canvas_image)
-        if y_coords >= self.bottom_death_limit:
-            self.lose_game()
-            print("shift this block to another function later")
-            return
 
         self.after(self.gravity_interval, self.make_bird_fall)  # recursive call to continuously simulate gravity
 
@@ -129,6 +146,11 @@ class App(tk.Tk):
             self.game_window_width/2, 370,
             image=self.exit_button_image
         )
+        self.highscore_label = self.canvas.create_text(
+            self.game_window_width/2, 430,
+            text="Highscore: " + self.backend.get_current_highscore(),
+            font=("Calibri", 18, "bold")
+        )
 
         self.canvas.tag_bind(self.play_button_canvas_image, '<Button-1>', lambda e: self.new_game())
         self.canvas.tag_bind(self.exit_button_canvas_image, '<ButtonRelease-1>', lambda e: self.exit_game())
@@ -136,12 +158,15 @@ class App(tk.Tk):
     def hide_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='hidden')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='hidden')
+        self.canvas.itemconfigure(self.highscore_label, state='hidden')
 
     def show_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='normal')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='normal')
+        self.canvas.itemconfigure(self.highscore_label, state='normal', text="Highscore: " + self.backend.get_current_highscore())
         self.canvas.lift(self.play_button_canvas_image)
         self.canvas.lift(self.exit_button_canvas_image)
+        self.canvas.lift(self.highscore_label)
 
     # pillars and scores
     def init_scoreboard(self):
@@ -162,7 +187,7 @@ class App(tk.Tk):
         self.pillar_spawnpoint_x = self.game_window_width + 100  # x coord of the first off-screen pillar in a new game
         self.pillar_distance = 300  # distance between 2 pillars' top left corners
         self.pillar_height = 400  # height of a pillar (image file)
-        self.pillar_hole_gap = 165  # distance between bottom edge of top pillar and top edge of bottom pillar
+        self.pillar_hole_gap = 170  # distance between bottom edge of top pillar and top edge of bottom pillar
 
         self.STANDARD_PILLAR_UP_Y = (self.game_window_height - self.pillar_hole_gap)/2 - self.pillar_height
         self.STANDARD_PILLAR_DOWN_Y = self.STANDARD_PILLAR_UP_Y + self.pillar_height + self.pillar_hole_gap
@@ -174,9 +199,9 @@ class App(tk.Tk):
 
             self.canvas_pillar_images.append([pillar_up, pillar_down])
 
-        self.reset_pillars_to_inital_position()
+        self.reset_pillars_to_initial_position()
 
-    def reset_pillars_to_inital_position(self):
+    def reset_pillars_to_initial_position(self):
         for i, [pillar_up, pillar_down] in enumerate(self.canvas_pillar_images):
             random_shift = random.randint(-10, 10) * 10
 
@@ -190,6 +215,9 @@ class App(tk.Tk):
                 self.pillar_spawnpoint_x + (self.pillar_distance * i),
                 self.STANDARD_PILLAR_DOWN_Y + random_shift
             )
+
+        self.initial_pillar_positions = self.canvas_pillar_images.copy()
+        self.currently_tracking_index = 0
 
     def shift_unseen_pillar(self):
         first_pillar_up, first_pillar_down = self.canvas_pillar_images[0]
@@ -221,49 +249,84 @@ class App(tk.Tk):
 
         if self.pillar_spawnpoint_x - xcoord_up >= self.pillar_distance - 50:
             # if the first pillar goes out of visual range
-            print("shifted", self.canvas_pillar_images)
+            # print("shifted", self.canvas_pillar_images)
             self.shift_unseen_pillar()
 
         self.after(50, self.keep_spawning_pillars)
 
     def check_pillar_for_score(self):
-        pilup, pildown = self.canvas_pillar_images[0]
-        pilup2, pildown2 = self.canvas_pillar_images[1]
+        currently_tracking_pillars = self.initial_pillar_positions[self.currently_tracking_index]
+        currently_tracking_pillar_up = currently_tracking_pillars[0]
+
+        bird_coord_x, bird_coord_y = self.canvas.coords(self.bird_canvas_image)
+        pilup_coord_x = self.canvas.coords(currently_tracking_pillar_up)[0]
+
+        if pilup_coord_x < bird_coord_x:
+            if bird_coord_y < 0:
+                self.lose_game()
+                return True
+
+            self.increment_score()
+            self.currently_tracking_index += 1
+            self.currently_tracking_index %= len(self.initial_pillar_positions)
 
     # game states
     def lose_game(self):
-        print("lose game")
+        # print("lose game")
         self.main_menu_screen = True
         self.disable_gravity()
+        self.backend.update_highscore_in_file(self.current_score)
         self.after(500, self.show_mainmenu)
         self.canvas.lift(self.scoreboard)
         self.bind("<Button-1>", lambda e: print(end=""))
+        self.bind("<space>", lambda e: print(end=""))
 
     def new_game(self):
-        print("new game")
+        # print("new game")
         self.hide_mainmenu()
         self.main_menu_screen = False
-        self.canvas.moveto(self.bird_canvas_image, 200, 200)
         self.canvas.itemconfigure(self.scoreboard, state='normal')
         self.reset_score()
-        self.reset_pillars_to_inital_position()
-        self.after(50, lambda: [self.bind("<Button-1>", lambda e: self.start_game())])
+        self.reset_pillars_to_initial_position()
+        self.after(50, lambda: [self.bind("<Button-1>", lambda e: self.start_game()), self.bind("<space>", lambda e: self.start_game())])
+        if not self.idle_animation_active:
+            self.canvas.moveto(self.bird_canvas_image, 200, 200)
+            self.idle_bird_animation()
 
     def start_game(self):
-        print("started")
+        # print("started")
         self.enable_gravity()
         self.keep_moving_pillars()
         self.keep_spawning_pillars()
-        self.check_pillar_for_score()
+        self.check_if_player_lost()
         self.make_bird_hop()
         self.bind("<Button-1>", lambda e: self.make_bird_hop())
+        self.bind("<space>", lambda e: self.make_bird_hop())
+        self.idle_interrupt = True
 
     def exit_game(self):
         self.canvas.delete(self.scoreboard)  # done to avoid a weird tkinter error when destroying game window
         self.after(200, self.destroy)
 
     def check_if_player_lost(self):
-        pass
+        above_upper_limit = self.check_pillar_for_score()
+        if above_upper_limit is True:
+            self.lose_game()
+            return
+
+        x1, y1, x2, y2 = self.canvas.bbox(self.bird_canvas_image)
+        overlapping_objects_with_bird = self.canvas.find_overlapping(x1, y1+3, x2-15, y2-3)
+
+        if sum(overlapping_objects_with_bird) > 10:
+            self.lose_game()
+            return
+
+        _, y_coords = self.canvas.coords(self.bird_canvas_image)
+        if y_coords >= self.bottom_death_limit:
+            self.lose_game()
+            return
+
+        self.after(10, self.check_if_player_lost)
 
     def disable_gravity(self):
         self.gravity_enabled = False

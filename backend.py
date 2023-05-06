@@ -46,6 +46,11 @@ class Backend:
 
         self.init_game_directory()
 
+        self.current_highscore_in_file = "0"
+        self.highscore_file = self.settings_directory / "highscore.txt"
+        self.create_highscore_file_if_not_exists()
+        self.get_highscore_from_file()
+
     def init_game_directory(self):
         if self.user_has_windows:
             current_root_directory = self.root_directory_for_windows
@@ -53,10 +58,56 @@ class Backend:
             current_root_directory = self.root_directory
 
         self.settings_directory = current_root_directory / self.creator_root_directory / self.game_directory
+        self.check_game_directory()
+
+    def check_game_directory(self):
         try:
             self.settings_directory.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             self.classic_game_mode = True
+
+    def create_highscore_file_if_not_exists(self):
+        self.check_game_directory()
+        self.highscore_file.touch(exist_ok=True)
+        if not self.highscore_file.is_file():
+            try:
+                self.highscore_file.rename(self.settings_directory / "rename this to something else")
+                self.create_highscore_file_if_not_exists()
+            except:
+                Path(self.settings_directory / "DELETE highscores.txt NOW").mkdir(parents=True, exist_ok=True)
+                sys.exit(0)
+
+    def get_highscore_from_file(self):
+        self.create_highscore_file_if_not_exists()
+        with open(self.highscore_file, "r") as file:
+            content = file.read().strip()
+            if not content.isdecimal():
+                with open(self.highscore_file, "w") as file:
+                    file.write("0")
+
+            else:
+                if int(content) >= 1500:
+                    self.current_highscore_in_file = "GOD???"
+                elif int(content) >= 100000:
+                    self.current_highscore_in_file = "CHEATER"
+                else:
+                    self.current_highscore_in_file = content
+
+    def update_highscore_in_file(self, score: int):
+        if self.current_highscore_in_file in ("GOD???", "CHEATER"):
+            return
+
+        if score <= int(self.current_highscore_in_file):
+            return
+
+        self.check_game_directory()
+        with open(self.highscore_file, "w") as file:
+            file.write(str(score))
+
+        self.current_highscore_in_file = str(score)
+
+    def get_current_highscore(self):
+        return self.current_highscore_in_file
 
     def get_current_bg_image(self):
         try:
