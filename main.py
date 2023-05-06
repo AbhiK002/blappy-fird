@@ -20,7 +20,7 @@ class App(tk.Tk):
         self.init_window()
         self.init_background()
         self.init_bird()
-        self.init_buttons()
+        self.init_mainmenu()
         self.init_pillars()
         self.init_scoreboard()
 
@@ -91,7 +91,7 @@ class App(tk.Tk):
         self.gravity_interval = 15
         self.bottom_death_limit = 470  # coords below which the bird dies, for ground death
 
-        self.bind("<Button-1>", lambda e: self.make_bird_jump())
+        self.bind("<Button-1>", lambda e: self.make_bird_hop())
         # left click event binded to the game window
 
     def make_bird_fall(self):
@@ -112,7 +112,7 @@ class App(tk.Tk):
 
         self.after(self.gravity_interval, self.make_bird_fall)  # recursive call to continuously simulate gravity
 
-    def make_bird_jump(self):
+    def make_bird_hop(self):
         if self.main_menu_screen:
             return
 
@@ -120,7 +120,7 @@ class App(tk.Tk):
         # bird provided an upward velocity
 
     # main menu
-    def init_buttons(self):
+    def init_mainmenu(self):
         self.play_button_canvas_image = self.canvas.create_image(
             self.game_window_width/2, 290,
             image=self.play_button_image
@@ -133,11 +133,11 @@ class App(tk.Tk):
         self.canvas.tag_bind(self.play_button_canvas_image, '<Button-1>', lambda e: self.new_game())
         self.canvas.tag_bind(self.exit_button_canvas_image, '<ButtonRelease-1>', lambda e: self.exit_game())
 
-    def hide_buttons(self):
+    def hide_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='hidden')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='hidden')
 
-    def show_buttons(self):
+    def show_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='normal')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='normal')
         self.canvas.lift(self.play_button_canvas_image)
@@ -235,13 +235,13 @@ class App(tk.Tk):
         print("lose game")
         self.main_menu_screen = True
         self.disable_gravity()
-        self.after(500, self.show_buttons)
+        self.after(500, self.show_mainmenu)
         self.canvas.lift(self.scoreboard)
         self.bind("<Button-1>", lambda e: print(end=""))
 
     def new_game(self):
         print("new game")
-        self.hide_buttons()
+        self.hide_mainmenu()
         self.main_menu_screen = False
         self.canvas.moveto(self.bird_canvas_image, 200, 200)
         self.canvas.itemconfigure(self.scoreboard, state='normal')
@@ -255,8 +255,8 @@ class App(tk.Tk):
         self.keep_moving_pillars()
         self.keep_spawning_pillars()
         self.check_pillar_for_score()
-        self.make_bird_jump()
-        self.bind("<Button-1>", lambda e: self.make_bird_jump())
+        self.make_bird_hop()
+        self.bind("<Button-1>", lambda e: self.make_bird_hop())
 
     def exit_game(self):
         self.canvas.delete(self.scoreboard)  # done to avoid a weird tkinter error when destroying game window

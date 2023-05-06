@@ -1,10 +1,8 @@
 # Blappy Fird
-A remake by Abhineet Kelley, just for a fun learning experience
+A remake by Abhineet Kelley of the classic game Flappy Bird, for a fun learning experience
 
 # Introduction
-(I've never written documentation for a project before, so this might not be the best document you read today, and for that I apologise in advance :P)
-
-Welcome to Blappy Fird, a remake of the classic game 'Flappy Bird' with a few more features like customisable backgrounds, etc. I made this game mostly for fun, but to also get an idea of how a professional project is carried out in real life with documentation and everything.
+Welcome to Blappy Fird, a remake of the classic game 'Flappy Bird' with a few more features like customisable backgrounds, etc. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
 
 # About the Game
 ## Rules
@@ -12,7 +10,7 @@ This game contains the classic gameplay of the original game, in addition to som
 The rules are simple:
 - Click or press SPACEBAR to make the bird hop
 - The bird will automatically come down (because gravity)
-- Hop through the obstacles without touching them to score 1 point
+- Hop through infinite obstacles to score 1 point
 - If you touch the ground or any obstacle, you lose
 - Reach the highest score you can
 
@@ -23,7 +21,8 @@ The rules are simple:
 Blappy Fird has been made using the Python language and tkinter has been used for the GUI of the game. I used tkinter because the game doesn't have advanced graphics or mechanisms that require complex frameworks like PyQt5.
 
 ## Libraries/Modules Used
-- `tkinter`: To make the GUI of the game
+- `tkinter`: To make the GUI of the game.
+- `random`: To generate random values used for the obstacles in the game
 - `pathlib`: Generating cross-platform folder/file paths since different operating systems have different path representations (`/` or `\\`)
 - `os`:  Making a function `resource_path(relative_path)` that'll help us embed assets into the exe file made using `pyinstaller` 
 - `sys`: Same usage as `os`
@@ -73,10 +72,46 @@ Details about each file/folder:
 After the game has been converted into an exe file, the 2 python files will become 1 exe file instead. Also, the default images will get embedded into the exe file itself so that the game doesn't crash in case it doesn't find any of the image files/assets.
 
 # How Blappy Fird Works
-Blappy Fird is a fun little game and therefore has a simple working mechanism. I'll explain it in 2 parts: before the game starts and after the game starts.
+## Overview
+Blappy Fird is a fun little game and therefore has a simple working mechanism. It basically has 3 states/scenes:
+- Main Menu
+  - ACTIVE when the bird dies, or user starts the game 
+  - PLAY button, EXIT button visible
+  - bird hovers mid air in the background, unaffected by the user's actions
+  - current score displayed on the top
+
+
+- Pre-round
+  - ACTIVE when the user clicks the PLAY button
+  - main menu is hidden
+  - score count resets to 0
+  - game waits for the user to click anywhere/press spacebar again
+  - as soon as the user presses spacebar/clicks anywhere, the game will start
+  - bird hovers mid air and no obstacles spawn yet
+
+
+- Actual round gameplay
+  - ACTIVE when the user clicks anywhere during the pre round
+  - gravity starts acting on the bird
+  - obstacles start spawning and the bird travels through them
+  - the score count increases by 1 everytime the bird passes an obstacle without dying
+  - as soon as the bird dies, the game goes to the Main Menu state
+
+
+This is how the game works on the outside. Now, for the inside part I will explain the working of the code in 2 parts:
+1. Starting the game
+2. Running the game
+
+NOTE: the `tkinter` library will be referred to as `tk` in the entire documentation, since I imported it with the alias `tk` in the source code
 
 ## Starting the game
-### Inside main.py
+These are some important details to remember about the game's GUI:
+- The game window only has a single `tk.Canvas` widget that covers the entire window area
+- All the things you see on the screen are image files drawn onto the canvas widget itself
+- I will refer to the `tk.Canvas` widget as "the canvas" throughout the documentation
+  - no confusion, since there's only 1 canvas in the entire source code
+
+### Run main.py
 To start the game, we run `main.py`, that contains a class named `App` which will then be initialised in the main block inside the file.
 ```python
 import tkinter as tk
@@ -92,40 +127,48 @@ if __name__ == '__main__':
 ```
 I decided to inherit from the Tk class instead of making a `self.root = tk.Tk()` object and using it throughout the class because I have no idea, it just looks cooler.
 
-Okay 1 small reason, writing `self.geometry` is easier than `self.root.geometry` since I don't have to type root again and again. But that's not exactly the reason. Anyways moving on, the `__init__` method of App is called.
+1 small advantage can be, writing `self.geometry` is easier than `self.root.geometry` since I don't have to type root again and again. But the difference isn't significant. Anyways moving on, the `__init__()` method of `App` is called.
 
-Here are the things that happen inside the `__init__` method of `App` class:
-- the `__init__` method of parent class `tk.Tk` is called
-
-
-- a boolean `bird_paused` is initialised to `False`
-  - this controls whether the bird is currently under the effect of gravity or not
-  - will be set to `True` if the user pauses the game, since that won't end the game, only keep the bird frozen in place
+Here are the things that happen inside the `__init__()` method of `App` class:
+- `super().__init__()`: initialiser method of parent class `tk.Tk` is called.
+  - this creates the main `Tk` window, which will be referred to as the game window in the code as well as this document
 
 
-- an instance of class `Backend` is stored in `self.backend` to be used throughout the `App` class
+- `gravity_enabled`: boolean is initialised to `False`
+  - indicates whether the bird is currently under the effect of gravity or not
+  - turns to `True` when a game round is started
+- `main_menu_screen`: boolean is initialised to `True`
+  - indicates whether the main menu is visible (the play, exit buttons)
+  - turns to `False` when a game round is started
+
+- `backend`: stores an instance of class `Backend` to be used throughout the `App` class
   - this class is present in the `backend.py` file and will be talked about soon  
 
 
-- `self.background_images`: a list is initialised to `[]` that will contain the reference to images in the game's background
-    - it always contains 3 images that have been placed side to side on a `tk.Canvas` widget
-    - these 3 images are then moved from right to left
-    - when the first image is out of view, it is shifted to the right side of the previously third image
-    - the same happens to the list... `list.append(list.pop(0))`
-    - this is how an infinitely scrolling background is achieved
-  
+- `canvas_bg_images`: an empty list to store the IDs (called tags in the tkinter world) of the background images drawn onto the main canvas
+  - this list will help in giving an infinitely scrolling background effect
+
+- `canvas_pillar_images`: an empty list to store the IDs/tags of the pillars' images drawn onto the canvas
+  - pillars are the obstacles in the game, just to make it clear
+
+- `current_score`: an integer storing the current score of the user
 
 - these methods are called:
+  - `store_currently_used_assets()`: fetches the currently used image assets from the `Backend` class via `self.backend` instance
+    - stuff like the currently selected background image, player icon image and pillar images
+    - these are stored as class attributes (`self.some_attribute`) so that they can be used anywhere inside the `App` class
   - `init_window()`: configure the game window (dimensions, coordinates on the screen, resizable properties, etc)
-  - `update_used_assets()`: fetches the currently used image assets from the `Backend` class via `self.backend` instance
-    - stuff like the currently selected background image, player icon image and pillar image (which are the classic ones by default, will be talked about later)
-    - these are stored in 3 class variables to be used by the GUI code
-  - `scroll_background()`: starts animating the background to give the effect of an infinite scroll
-  - `init_bird()`: displays the player icon (which is by default a yellow bird) in the game
-    - this method also defines the acceleration due to gravity on the bird
-    - the `LEFT_MOUSE_CLICK` event, which is `<Button-1>` in tkinter, is binded to a function `make_bird_jump()` that will make the bird hop whenever the user clicks their mouse inside the window
-  - `mainloop()`: start displaying the main `tk.Tk` game window
+  - `init_background()`: draws the background images on the canvas, adds their tags to `self.canvas_bg_images` list and starts animating them
+    - 3 images in total for an infinite scrolling effect
+  - `init_bird()`: draws the player icon (which is by default a yellow bird) on the canvas
+    - defines properties like gravity, terminal velocity etc for the physics of the bird
+  - `init_mainmenu()`: draws the main menu buttons and other widgets onto the canvas and binds them to related functions
+  - `init_pillars()`: draws the obstacles/pillars off-screen onto the canvas and adds their tags to `self.canvas_pillar_images` list
+  - `init_scoreboard()`: draws the score label(text widget) displaying the current score on the canvas
+  - `mainloop()`: keeps the game window visible
 
+Once these methods have been called, the game now waits for the user to click on any of the buttons and eventually play the game.
+Each and every function present in the code is explained in detail later in this document.
 
 ### Inside backend.py
 If you don't remember (although it's only a few lines up), we initialised the `Backend` class inside the `__init__` method of `App` class. 
@@ -160,12 +203,14 @@ Inside the `Backend` class definition, these class attributes are defined:
 
 - `creator_root_directory` (String): name of the parent directory named after me, which will contain the main game directory
 - `game_directory` (String): name of the game directory that will contain the settings files
-
+- `assets_directory` (Path object): path to the assets folder that contains the game's image files
  
 - `DEFAULT_BACKGROUND`: path to the default sky background image file
 - `DEFAULT_BIRD`: path to the default yellow bird image file
-- `DEFAULT_PILLARS`: path to the default green pillars image file
-
+- `DEFAULT_PILLAR_UP`: path to the default green pillar (pointing down) image file
+- `DEFAULT_PILLAR_DOWN`: path to the default green pillar (pointing up) image file
+- `PLAY_BUTTON`: path to the PLAY button image file
+- `EXIT_BUTTON`: path to the EXIT button image file
 
 ```python
 from pathlib import Path
@@ -200,9 +245,10 @@ Path("/home/YOURNAME/AbhineetKelley/BlappyFird")
 #### Normal Stuff
 These things in particular happen inside the `__init__` method of `Backend` class:
 - three variables that will store the currently used game assets are initialised:
-  - `game_background_image`: initialised to `Backend.DEFAULT_BACKGROUND`
-  - `game_player_image`: initialised to `Backend.DEFAULT_BIRD`
-  - `game_pillar_image`: initialised to `Backend.DEFAULT_PILLARS`
+  - `game_background_image`: initialised to `DEFAULT_BACKGROUND`
+  - `game_player_image`: initialised to `DEFAULT_BIRD`
+  - `game_pillar_up_image`: initialised to `DEFAULT_PILLAR_UP`
+  - `game_pillar_down_image`: initialised to `DEFAULT_PILLAR_DOWN`
 
 
 - `user_has_windows`: self-explanatory boolean value, True if user has Windows OS
@@ -214,8 +260,8 @@ These things in particular happen inside the `__init__` method of `Backend` clas
 - `init_game_directory()`: this method is called that does the following:
   - makes a class variable called `settings_directory` which is a Path object
   - this class variable contains the path to the game's user data directory
-    - For Windows, as discussed in the latest code snippet, `Backend.root_directory_for_windows` is used
-    - For any other OS, `Backend.root_directory` is used as the root directory 
+    - For Windows, as discussed in the latest code snippet, `root_directory_for_windows` is used
+    - For any other OS, `root_directory` is used as the root directory 
   - makes all the parent and subdirectories by using `Path.mkdir(parents=True, exist_ok=True)`, in case they don't exist
 
   
@@ -230,14 +276,31 @@ The 'Running the game' section will explain each method of both the classes in d
 
 Before I go into detail, here's an overview of how the game works:
 - After starting the game:
-  - the game window is visible in the main thread
-  - an infinitely scrolling background is being animated in a separate thread
-  - the bird/player icon is visible in the foreground, hanging mid air
-  - the game is waiting for the user to click or press spacebar
+  - the main menu is visible with 2 buttons: PLAY and EXIT
+  - an infinitely scrolling background is visible
+  - the bird/player icon is visible in the foreground, hovering mid air
+  - the game is waiting for you to click any of the buttons
+- When you click the EXIT button, the game closes
+- In case of the PLAY button, you will now enter the Pre-Round stage
+  - details about the pre-round stage have been discussed before
+  - the game is now waiting for you to click anywhere in the screen to start playing the game
+  - gravity is still disabled
+- When you click anywhere or press spacebar, the game starts
+  - gravity on the bird is enabled
+  - obstacles start spawning and the bird seems to move towards the pillars
+  - the obstacles are placed at random heights to make the game challenging
+- During the gameplay round, 5 separate concurrent threads with different purposes are running:
+  - background image(s) scrolling towards the left
+  - pillars/obstacles moving towards the bird
+  - bird being moved downwards due to gravity
+  - off screen obstacles being shifted to the right repeatedly for an infinite obstacle gameplay
+  - check whether the player has lost
+- As soon as the player touches the ground or the pillars, round ends
+  - main menu is visible again
+  - This time, when you press the PLAY button:
+    - the pillars currently on the canvas are shifted back to their default positions off screen to the right
+    - the bird is shifted to its default position and now hovers mid air
+    - current score gets reset to 0
 
 
-- When you click/press spacebar, a function `make_bird_hop()` that is binded to those events makes the bird hop, the boolean `bird_paused` is set to `False` and the game starts
-- Gravity starts acting on the bird instantly via a function `make_bird_fall()` that animates the bird going down, which is called repeatedly every few milliseconds in a separate thread
-- Everytime you click/press spacebar, the function `make_bird_hop()` is called
-- if the bird touches the ground, the function `make_bird_fall()` detects that and sets `bird_paused` to `True`, freezing the bird in place so it doesn't go all the way down
-- the thread running `make_bird_fall()` repeatedly is then stopped by the function itself since `bird_paused` becomes `True`
+This is pretty much it.
