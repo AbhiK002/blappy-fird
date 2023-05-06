@@ -29,6 +29,8 @@ class Backend:
 
     PLAY_BUTTON = resource_path(assets_directory / "play.png")
     EXIT_BUTTON = resource_path(assets_directory / "exit.png")
+    HELP = resource_path(assets_directory / "help.png")
+    LOGO = resource_path(assets_directory / "logo.png")
 
     def __init__(self):
         self.game_background_image = self.DEFAULT_BACKGROUND
@@ -38,6 +40,8 @@ class Backend:
 
         self.play_button = self.PLAY_BUTTON
         self.exit_button = self.EXIT_BUTTON
+        self.help = self.HELP
+        self.logo = self.LOGO
 
         self.user_has_windows = True if "win" in platform.system().lower() else False
 
@@ -141,5 +145,17 @@ class Backend:
             return [img1, img2]
         except Exception:
             print("buttons images don't exist")
+            return None
+
+    def get_logo_image(self):
+        try:
+            return PhotoImage(file=self.logo)
+        except:
+            return None
+
+    def get_help_image(self):
+        try:
+            return PhotoImage(file=self.help)
+        except:
             return None
 

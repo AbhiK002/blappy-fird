@@ -26,6 +26,15 @@ class App(tk.Tk):
 
         self.mainloop()
 
+    def store_currently_used_assets(self):
+        self.background_image = self.backend.get_current_bg_image()
+        self.player_icon_image = self.backend.get_current_player_image()
+        self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
+
+        self.play_button_image, self.exit_button_image = self.backend.get_buttons_images()
+        self.help_image = self.backend.get_help_image()
+        self.logo_image = self.backend.get_logo_image()
+
     def init_window(self):
         self.title("Blappy Fird")
         self.resizable(False, False)
@@ -43,13 +52,6 @@ class App(tk.Tk):
         self.geometry(f"{self.game_window_width}x{self.game_window_height}+{pos_x}+{pos_y}")
         self.canvas = tk.Canvas(self, height=self.game_window_height, width=self.game_window_width)
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-    def store_currently_used_assets(self):
-        self.background_image = self.backend.get_current_bg_image()
-        self.player_icon_image = self.backend.get_current_player_image()
-        self.pillar_up_image, self.pillar_down_image = self.backend.get_current_pillar_images()
-
-        self.play_button_image, self.exit_button_image = self.backend.get_buttons_images()
 
     def init_background(self):
         bg_img1 = self.canvas.create_image(0, 0, image=self.background_image, anchor=tk.NW)
@@ -139,18 +141,24 @@ class App(tk.Tk):
     # main menu
     def init_mainmenu(self):
         self.play_button_canvas_image = self.canvas.create_image(
-            self.game_window_width/2, 290,
+            self.game_window_width/2, 310,
             image=self.play_button_image
         )
         self.exit_button_canvas_image = self.canvas.create_image(
             self.game_window_width/2, 370,
             image=self.exit_button_image
         )
-        self.highscore_label = self.canvas.create_text(
+        self.highscore_canvas_label = self.canvas.create_text(
             self.game_window_width/2, 430,
             text="Highscore: " + self.backend.get_current_highscore(),
             font=("Calibri", 18, "bold")
         )
+        self.logo_canvas_image = self.canvas.create_image(
+            self.game_window_width/2, 130,
+            image=self.logo_image
+        )
+
+        self.init_help()
 
         self.canvas.tag_bind(self.play_button_canvas_image, '<Button-1>', lambda e: self.new_game())
         self.canvas.tag_bind(self.exit_button_canvas_image, '<ButtonRelease-1>', lambda e: self.exit_game())
@@ -158,19 +166,35 @@ class App(tk.Tk):
     def hide_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='hidden')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='hidden')
-        self.canvas.itemconfigure(self.highscore_label, state='hidden')
+        self.canvas.itemconfigure(self.highscore_canvas_label, state='hidden')
+        self.canvas.itemconfigure(self.logo_canvas_image, state='hidden')
 
     def show_mainmenu(self):
         self.canvas.itemconfigure(self.play_button_canvas_image, state='normal')
         self.canvas.itemconfigure(self.exit_button_canvas_image, state='normal')
-        self.canvas.itemconfigure(self.highscore_label, state='normal', text="Highscore: " + self.backend.get_current_highscore())
+        self.canvas.itemconfigure(self.highscore_canvas_label, state='normal', text="Highscore: " + self.backend.get_current_highscore())
+        self.canvas.itemconfigure(self.logo_canvas_image, state='normal')
         self.canvas.lift(self.play_button_canvas_image)
         self.canvas.lift(self.exit_button_canvas_image)
-        self.canvas.lift(self.highscore_label)
+        self.canvas.lift(self.highscore_canvas_label)
+        self.canvas.lift(self.logo_canvas_image)
 
-    # pillars and scores
+    # help
+    def init_help(self):
+        self.help_canvas_image = self.canvas.create_image(
+            self.game_window_width/2, 420,
+            image=self.help_image, state='hidden'
+        )
+
+    def show_help(self):
+        self.canvas.itemconfigure(self.help_canvas_image, state='normal')
+
+    def hide_help(self):
+        self.canvas.itemconfigure(self.help_canvas_image, state='hidden')
+
+# pillars and scores
     def init_scoreboard(self):
-        self.scoreboard = self.canvas.create_text(300, 50, text=f"{self.current_score}", font=("Calibri", 48, "bold"), state='hidden')
+        self.scoreboard = self.canvas.create_text(300, 30, text=f"{self.current_score}", font=("Calibri", 48, "bold"), state='hidden')
 
     def update_scoreboard(self):
         self.canvas.itemconfigure(self.scoreboard, text=f'{self.current_score}')
@@ -288,6 +312,7 @@ class App(tk.Tk):
         self.canvas.itemconfigure(self.scoreboard, state='normal')
         self.reset_score()
         self.reset_pillars_to_initial_position()
+        self.show_help()
         self.after(50, lambda: [self.bind("<Button-1>", lambda e: self.start_game()), self.bind("<space>", lambda e: self.start_game())])
         if not self.idle_animation_active:
             self.canvas.moveto(self.bird_canvas_image, 200, 200)
@@ -295,6 +320,7 @@ class App(tk.Tk):
 
     def start_game(self):
         # print("started")
+        self.hide_help()
         self.enable_gravity()
         self.keep_moving_pillars()
         self.keep_spawning_pillars()
@@ -315,7 +341,7 @@ class App(tk.Tk):
             return
 
         x1, y1, x2, y2 = self.canvas.bbox(self.bird_canvas_image)
-        overlapping_objects_with_bird = self.canvas.find_overlapping(x1, y1+3, x2-15, y2-3)
+        overlapping_objects_with_bird = self.canvas.find_overlapping(x1, y1+1, x2-1, y2-1)
 
         if sum(overlapping_objects_with_bird) > 10:
             self.lose_game()
