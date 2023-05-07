@@ -145,17 +145,19 @@ class Backend:
             return [img1, img2]
         except Exception:
             print("buttons images don't exist")
-            return None
+            img1 = PhotoImage(file=self.PLAY_BUTTON)
+            img2 = PhotoImage(file=self.EXIT_BUTTON)
+            return [img1, img2]
 
     def get_logo_image(self):
         try:
             return PhotoImage(file=self.game_logo_image)
         except:
-            return None
+            return PhotoImage(file=self.LOGO)
 
     def get_help_image(self):
         try:
             return PhotoImage(file=self.game_help_image)
         except:
-            return None
+            return PhotoImage(file=self.HELP)
 

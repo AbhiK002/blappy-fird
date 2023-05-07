@@ -264,13 +264,8 @@ These things in particular happen inside the `__init__` method of `Backend` clas
   - the idea is, if the game can't access its assets, the default image files embedded into the EXE file will be used
 
 
-- `init_game_directory()`: this method is called that does the following:
-  - `settings_directory` which is a Path object is defined
-  - this class variable contains the path to the game's user data directory
-    - For Windows, as discussed in the latest code snippet, `root_directory_for_windows` is used
-    - For any other OS, `root_directory` is used as the root directory 
-  - makes all the parent and subdirectories by using `Path.mkdir(parents=True, exist_ok=True)`, in case they don't exist
-
+- `init_game_directory()`: this method is called that stores the game's user data directory for use throughout the class
+  
 - to control and store the highscore:
   - `current_highscore_in_file` (String): when the game is initially started, the current highscore from the file is read and stored in this
   - `highscore_file` (Path object): stores the path to the file that contains the saved highscore
@@ -324,12 +319,15 @@ This is pretty much it. Now going into the details, the next section will explai
 
 # 5. Detailed Code Documentation
 This section will list all the methods present in both the classes `App` and `Backend`, and explain what all they do.
-## 5.2 `main.py`: class `App`
+## 5.1 `main.py`: class `App`
 ### 0. `__init__(self)`
   - has been explained in section 4.1.1
 
 ### 1. `store_currently_used_assets(self)`
-  - calls the respective methods of the `Backend` class
+  - calls the respective methods of the `Backend` class to get the `tk.PhotoImage` objects of the image paths defined in the `Backend` class
+    - tkinter can only work with images via `tk.PhotoImage` instances
+    - only then we can draw those images on the canvas
+    - the methods of `Backend` class have been discussed in section 5.2
   - defines these class attributes, each of them storing `tk.PhotoImage` objects of all the currently used assets in the game:
     - `self.background_image`
     - `self.player_icon_image`
@@ -587,3 +585,90 @@ This section will list all the methods present in both the classes `App` and `Ba
   - `self.gravity_enabled` is set to `True`
   - `self.make_bird_fall()` is called, which starts a new thread controlling the bird's gravity
 
+## 5.2 `backend.py`: class `Backend`
+Before we discuss the methods of the `Backend` class, there's a global function defined before that:
+
+- `resource_path(relative_path)`:
+  - this function returns the absolute path from a given relative path of a file/folder
+  - however, here it has been defined to facilitate embedding asset files into the bundled EXE file made using `pyinstaller` module
+  - this is a workaround for `pyinstaller` to easily find asset files while bundling the EXE file
+
+Now, we discuss each method of class `Backend`
+### 0. `__init__(self)`
+  - discussed before in section 4.1.2
+
+### 1. `init_game_directory(self)`
+  - `self.settings_directory` which is a Path object is defined
+  - this class variable contains the path to the game's user data directory
+    - For Windows, as discussed in the latest code snippet, `self.root_directory_for_windows` is used
+    - For any other OS, `self.root_directory` is used as the root directory 
+  - makes all the parent and subdirectories by using `Path.mkdir(parents=True, exist_ok=True)`, in case they don't exist
+
+### 2. `check_game_directory(self)`
+  - creates the game's user data directory stored in `self.settings_directory` incase it doesn't exist
+    - also creates all the parent folders if required
+  - in case of some error, `self.classic_game_mode` is set to `True`
+    - this does not have a purpose yet
+
+### 3. `create_highscore_file_if_not_exists(self)`
+  - calls `self.check_game_directory()` to ensure parent folders exist
+  - makes an empty text file at path `self.highscore_file` in case it doesn't exist
+  - if there's a folder with the same name (highscores.txt), that folder is renamed to "rename this to something else" and the highscores.txt text file is created
+
+### 4. `get_highscore_from_file(self)`
+  - calls `self.create_highscore_file_if_not_exists()`
+  - reads the file `self.highscore_file` and stores its contents altogether as a string in a local variable `content`, stripped of any whitespace characters leaving just the main text of the file
+    - if the `content` string doesn't only contain numbers, the score is invalid and therefore "0" is written into the file
+    - in case it does contain only numbers,
+      - `content` is converted into an integer by using `int(content)`
+      - if that integer is above 1500, the player is a God apparently and has spent a lot of time on the game (or changed the text file manually)
+        - `self.current_highscore_in_file` is set to `"GOD???"`
+      - if it is above 100000, the player is a Cheater.
+        - `self.current_highscore_in_file` is set to `"CHEATER"`
+      - these string values will be displayed to the user in the GUI later on >:)
+      - else, `self.current_highscore_in_file` is set to the integer itself which was the high score of the player last time they played Blappy Fird
+
+### 5. `update_highscore_in_file(self, score: int)`
+  - if `self.current_highscore_in_file` is set to the God or Cheater string values, stop the function here
+  - if the given argument `score` is less than or equal to the integer value of `self.current_highscore_in_file`, that means the player hasn't beaten the current highscore. the function stops here
+  - otherwise, the `self.check_game_directory()` is called and the `score` is written into the file
+    - implying the player beat their highscore
+  - `self.current_highscore_in_file` is set to the string form of `score`
+
+### 6. `get_current_highscore(self)`
+  - returns the string `self.current_highscore_in_file`
+  - this string will be displayed in the GUI of the game in the `self.highscore_canvas_label` if you remember.
+
+### 7. `get_current_bg_image(self)`
+  - returns the `PhotoImage` object of `self.game_background_image`
+  - in case of an error, returns the `PhotoImage` object of `self.DEFAULT_BACKGROUND`
+  - tkinter only works with images by using the `PhotoImage` class. This is why we need to pass our image paths as these objects so they can be drawn on the canvas in the GUI.
+
+### 8. `get_current_player_image(self)`
+  - returns the `PhotoImage` object of `self.game_player_image`
+  - in case of an error, returns the `PhotoImage` object of `self.DEFAULT_BIRD`
+
+### 9. `get_current_pillar_images(self)`
+  - returns the `PhotoImage` objects of `self.game_pillar_up_image` and `self.game_pillar_down_image` as a list
+  - in case of an error, returns the `PhotoImage` objects of `self.DEFAULT_PILLAR_UP` and `self.DEFAULT_PILLAR_DOWN`
+
+### 10. `get_buttons_images(self)`
+  - returns the `PhotoImage` objects of `self.game_play_button_image` and `self.game_exit_button_image` as a list
+  - in case of an error, returns  the `PhotoImage` objects of `self.PLAY_BUTTON` and `self.EXIT_BUTTON`
+
+### 11. `get_logo_image(self)`
+  - returns the `PhotoImage` object of `self.game_logo_image`
+  - in case of an error, returns the `PhotoImage` object of `self.LOGO`
+
+### 12. `get_help_image(self)`
+  - returns the `PhotoImage` object of `self.game_help_image`
+  - in case of an error, returns the `PhotoImage` object of `self.HELP`
+
+# 6. Conclusion
+I hope you understood this game's working and the source code behind this from this documentation. I've never written documentation for any project before, so this might not have been the beset document you've read today. But it was really fun writing all this.
+
+I hope you enjoy this weird clone of Flappy Bird. I will maybe add extra stuff in the future like themes, etc.
+
+See you in the next project!
+
+Blappy Fird made by Abhineet Kelley, 2023
