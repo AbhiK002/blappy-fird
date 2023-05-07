@@ -40,14 +40,14 @@ class App(tk.Tk):
         self.resizable(False, False)
         self.iconphoto(True, self.backend.get_current_player_image())
 
-        self.user_screen_width = self.winfo_screenwidth()
-        self.user_screen_height = self.winfo_screenheight()
+        user_screen_width = self.winfo_screenwidth()
+        user_screen_height = self.winfo_screenheight()
 
         self.game_window_width = 600
         self.game_window_height = 500
 
-        pos_x = int((self.user_screen_width - self.game_window_width)/2)
-        pos_y = int((self.user_screen_height - self.game_window_height)/2)
+        pos_x = int((user_screen_width - self.game_window_width)/2)
+        pos_y = int((user_screen_height - self.game_window_height)/2)
 
         self.geometry(f"{self.game_window_width}x{self.game_window_height}+{pos_x}+{pos_y}")
         self.canvas = tk.Canvas(self, height=self.game_window_height, width=self.game_window_width)
@@ -63,7 +63,7 @@ class App(tk.Tk):
         self.scroll_background()
 
     def scroll_background(self):
-        for i, img in enumerate(self.canvas_bg_images):
+        for img in self.canvas_bg_images:
             self.canvas.move(img, -2, 0)
 
         self.shift_unseen_background()
@@ -91,7 +91,7 @@ class App(tk.Tk):
         self.terminal_velocity = 9.5  # maximum downwards velocity the bird can reach
         self.gravity_acceleration = 0.6   # pixels per gravity_interval that will be added to the bird's velocity
         self.gravity_interval = 15
-        self.bottom_death_limit = 470  # coords below which the bird dies, for ground death
+        self.bottom_death_limit = self.game_window_height - 30  # coords below which the bird dies, for ground death
 
         self.bind("<Button-1>", lambda e: self.make_bird_hop())
         self.bind("<space>", lambda e: self.make_bird_hop())
@@ -100,7 +100,7 @@ class App(tk.Tk):
         self.idle_interrupt = False
         self.idle_animation_active = True
         self.idle_pixel_count = 0
-        self.idle_increment = 2
+        self.idle_increment = 1
         self.idle_bird_animation()
 
     def idle_bird_animation(self):
@@ -113,11 +113,11 @@ class App(tk.Tk):
         self.canvas.move(self.bird_canvas_image, 0, self.idle_increment)
         self.idle_pixel_count += 1
 
-        if self.idle_pixel_count > 15:
+        if self.idle_pixel_count > 30:
             self.idle_increment *= -1
             self.idle_pixel_count = 0
 
-        self.after(50, self.idle_bird_animation)
+        self.after(20, self.idle_bird_animation)
 
     def make_bird_fall(self):
         if not self.gravity_enabled:
@@ -208,7 +208,7 @@ class App(tk.Tk):
         self.update_scoreboard()
 
     def init_pillars(self):
-        self.pillar_spawnpoint_x = self.game_window_width + 100  # x coord of the first off-screen pillar in a new game
+        self.pillar_spawnpoint_x = self.game_window_width + 100  # x coord of the first off-screen pillar in a new round
         self.pillar_distance = 300  # distance between 2 pillars' top left corners
         self.pillar_height = 400  # height of a pillar (image file)
         self.pillar_hole_gap = 170  # distance between bottom edge of top pillar and top edge of bottom pillar
@@ -264,7 +264,7 @@ class App(tk.Tk):
 
         self.after(10, self.keep_moving_pillars)
 
-    def keep_spawning_pillars(self):
+    def keep_shifting_pillars(self):
         if self.main_menu_screen:
             return
 
@@ -276,25 +276,8 @@ class App(tk.Tk):
             # print("shifted", self.canvas_pillar_images)
             self.shift_unseen_pillar()
 
-        self.after(50, self.keep_spawning_pillars)
+        self.after(50, self.keep_shifting_pillars)
 
-    def check_pillar_for_score(self):
-        currently_tracking_pillars = self.initial_pillar_positions[self.currently_tracking_index]
-        currently_tracking_pillar_up = currently_tracking_pillars[0]
-
-        bird_coord_x, bird_coord_y = self.canvas.coords(self.bird_canvas_image)
-        pilup_coord_x = self.canvas.coords(currently_tracking_pillar_up)[0]
-
-        if pilup_coord_x < bird_coord_x:
-            if bird_coord_y < 0:
-                self.lose_game()
-                return True
-
-            self.increment_score()
-            self.currently_tracking_index += 1
-            self.currently_tracking_index %= len(self.initial_pillar_positions)
-
-    # game states
     def lose_game(self):
         # print("lose game")
         self.main_menu_screen = True
@@ -305,6 +288,7 @@ class App(tk.Tk):
         self.bind("<Button-1>", lambda e: print(end=""))
         self.bind("<space>", lambda e: print(end=""))
 
+    # game states
     def new_game(self):
         # print("new game")
         self.hide_mainmenu()
@@ -323,8 +307,8 @@ class App(tk.Tk):
         self.hide_help()
         self.enable_gravity()
         self.keep_moving_pillars()
-        self.keep_spawning_pillars()
-        self.check_if_player_lost()
+        self.keep_shifting_pillars()
+        self.keep_checking_if_player_lost()
         self.make_bird_hop()
         self.bind("<Button-1>", lambda e: self.make_bird_hop())
         self.bind("<space>", lambda e: self.make_bird_hop())
@@ -334,7 +318,23 @@ class App(tk.Tk):
         self.canvas.delete(self.scoreboard)  # done to avoid a weird tkinter error when destroying game window
         self.after(200, self.destroy)
 
-    def check_if_player_lost(self):
+    def check_pillar_for_score(self):
+        currently_tracking_pillars = self.initial_pillar_positions[self.currently_tracking_index]
+        currently_tracking_pillar_up = currently_tracking_pillars[0]
+
+        bird_coord_x, bird_coord_y = self.canvas.coords(self.bird_canvas_image)
+        pilup_coord_x = self.canvas.coords(currently_tracking_pillar_up)[0]
+
+        if pilup_coord_x < bird_coord_x:
+            if bird_coord_y < 0:
+                self.lose_game()
+                return True
+
+            self.increment_score()
+            self.currently_tracking_index += 1
+            self.currently_tracking_index %= len(self.initial_pillar_positions)
+
+    def keep_checking_if_player_lost(self):
         above_upper_limit = self.check_pillar_for_score()
         if above_upper_limit is True:
             self.lose_game()
@@ -352,7 +352,7 @@ class App(tk.Tk):
             self.lose_game()
             return
 
-        self.after(10, self.check_if_player_lost)
+        self.after(10, self.keep_checking_if_player_lost)
 
     def disable_gravity(self):
         self.gravity_enabled = False

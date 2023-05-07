@@ -100,7 +100,7 @@ Blappy Fird is a fun little game and therefore has a simple working mechanism. I
   - as soon as the bird dies, the game goes to the Main Menu state
 
 
-This is how the game works on the outside. Now, for the inside part I will explain the working of the code in 2 parts:
+That was a small insight into the logic of the game. Now, for the inside part I will explain the working of the code in 3 parts:
 1. Starting the game
 2. Running the game
 
@@ -213,6 +213,8 @@ Inside the `Backend` class definition, these class attributes are defined:
 - `DEFAULT_PILLAR_DOWN`: path to the default green pillar (pointing up) image file
 - `PLAY_BUTTON`: path to the PLAY button image file
 - `EXIT_BUTTON`: path to the EXIT button image file
+- `HELP`: path to the help image that shows how the user can play the game (right click/spacebar)
+- `LOGO`: path to the logo image file of the game
 
 ```python
 from pathlib import Path
@@ -246,12 +248,15 @@ Path("/home/YOURNAME/AbhineetKelley/BlappyFird")
 
 #### 4.1.2.2 Normal Stuff
 These things in particular happen inside the `__init__` method of `Backend` class:
-- three variables that will store the currently used game assets are initialised:
+- these variables that will store the currently used game assets are initialised:
   - `game_background_image`: initialised to `DEFAULT_BACKGROUND`
   - `game_player_image`: initialised to `DEFAULT_BIRD`
   - `game_pillar_up_image`: initialised to `DEFAULT_PILLAR_UP`
   - `game_pillar_down_image`: initialised to `DEFAULT_PILLAR_DOWN`
-
+  - `game_play_button_image`: initialised to `PLAY_BUTTON`
+  - `game_exit_button_image`: initialised to `EXIT_BUTTON`
+  - `game_help_image`: initialised to `HELP`
+  - `game_logo_image`: initialised to `LOGO`
 
 - `user_has_windows`: self-explanatory boolean value, True if user has Windows OS
 - `classic_game_mode`: another boolean value that will be True in case the game is unable to access its assets directory
@@ -260,12 +265,18 @@ These things in particular happen inside the `__init__` method of `Backend` clas
 
 
 - `init_game_directory()`: this method is called that does the following:
-  - makes a class variable called `settings_directory` which is a Path object
+  - `settings_directory` which is a Path object is defined
   - this class variable contains the path to the game's user data directory
     - For Windows, as discussed in the latest code snippet, `root_directory_for_windows` is used
     - For any other OS, `root_directory` is used as the root directory 
   - makes all the parent and subdirectories by using `Path.mkdir(parents=True, exist_ok=True)`, in case they don't exist
 
+- to control and store the highscore:
+  - `current_highscore_in_file` (String): when the game is initially started, the current highscore from the file is read and stored in this
+  - `highscore_file` (Path object): stores the path to the file that contains the saved highscore
+    - stored at `self.settings_directory / highscore.txt`
+  - `create_highscore_file_if_not_exists()`: this method creates the highscore text file if it doesn't exist
+  - `get_highscore_from_file()`: this method reads the highscore from the file and stores it into `current_highscore_in_file` class attribute
   
 This is a summary of what happens when the `__init__` methods of both the classes `App` and `Backend` are called, when the game is started.
 Now that the game has started, what happens next?
@@ -278,14 +289,16 @@ The 'Running the game' section will explain each method of both the classes in d
 
 Before I go into detail, here's an overview of how the game works:
 - After starting the game:
-  - the main menu is visible with 2 buttons: PLAY and EXIT
+  - the main menu is visible with 2 buttons: PLAY and EXIT, the logo of the game and the current highscore
   - an infinitely scrolling background is visible
   - the bird/player icon is visible in the foreground, hovering mid air
   - the game is waiting for you to click any of the buttons
 - When you click the EXIT button, the game closes
 - In case of the PLAY button, you will now enter the Pre-Round stage
-  - details about the pre-round stage have been discussed before
+  - the main menu is hidden and a help image is displayed, which shows you the controls of the game
   - the game is now waiting for you to click anywhere in the screen to start playing the game
+  - the score resets to 0
+  - the bird is in an idle animation, hovering up and down
   - gravity is still disabled
 - When you click anywhere or press spacebar, the game starts
   - gravity on the bird is enabled
@@ -293,10 +306,11 @@ Before I go into detail, here's an overview of how the game works:
   - the obstacles are placed at random heights to make the game challenging
 - During the gameplay round, 5 separate concurrent threads with different purposes are running:
   - background image(s) scrolling towards the left
-  - pillars/obstacles moving towards the bird
   - bird being moved downwards due to gravity
-  - off screen obstacles being shifted to the right repeatedly for an infinite obstacle gameplay
-  - check whether the player has lost
+  - pillars/obstacles moving towards the bird
+  - off screen pillar/obstacles being shifted accordingly to enable an infinite obstacle gameplay
+  - keep checking whether the player has lost and increase score when the bird passes an obstacle without dying
+  - bird's idle animation stops
 - As soon as the player touches the ground or the pillars, round ends
   - main menu is visible again
   - This time, when you press the PLAY button:
@@ -305,4 +319,271 @@ Before I go into detail, here's an overview of how the game works:
     - current score gets reset to 0
 
 
-This is pretty much it.
+This is pretty much it. Now going into the details, the next section will explain each method present in the game.
+
+
+# 5. Detailed Code Documentation
+This section will list all the methods present in both the classes `App` and `Backend`, and explain what all they do.
+## 5.2 `main.py`: class `App`
+### 0. `__init__(self)`
+  - has been explained in section 4.1.1
+
+### 1. `store_currently_used_assets(self)`
+  - calls the respective methods of the `Backend` class
+  - defines these class attributes, each of them storing `tk.PhotoImage` objects of all the currently used assets in the game:
+    - `self.background_image`
+    - `self.player_icon_image`
+    - `self.pillar_up_image` and `self.pillar_down_image`
+    - `self.help_image`
+    - `self.logo_image`
+  - these attributes will be useful in drawing the widgets on the canvas later on
+
+### 2. `init_window(self)`
+  - note: `self` is an instance of `App` class, which inherits from `tk.Tk` parent class, therefore making `self` an instance of `tk.Tk` as well. This means you can configure the main game window via `self` itself
+  - this method configures the game window:
+    - title set to "Blappy Fird"
+    - resiable property set to False
+    - title bar iconfile added
+    - class attributes that will be used later are defined:
+      - `self.game_window_width`: 600
+      - `self.game_window_height`: 500
+      - `self.canvas`: a `tk.Canvas` widget placed in the window
+        - it is stretched to fit the entire window and is the only widget present in the window
+        - all the images will be drawn inside the canvas itself
+    - ensures the game window spawns in the center of the screen
+      - done by getting the user's screen dimensions and configuring `self.geometry` to
+
+### 3. `init_background(self)`
+  - 3 background images placed side to side are drawn onto the canvas
+  - `self.canvas_bg_images` is set to a list of those 3 canvas images' tags
+    - tags are basically unique integers assigned to all the drawn widgets on the canvas
+    - these can be used to access the properties of any drawn canvas widget (text, image, shapes, etc)
+    - `self.canvas.move(tag, x_increment, y_increment)` for example can be used to move a drawn widget by `x_increment` and `y_increment` pixels via its tag
+  - `self.scroll_background()` method is called, explained below
+
+### 4. `scroll_background(self)`
+  - this is a recursive method running in its own separate thread (using tkinter's `self.after(milliseconds, function_obj)` method)
+  - on each call, it iterates through the `self.canvas_bg_images` and moves each background image to the left by 2 pixels
+  - calls the `self.shift_unseen_background()` method, explained below
+  - runs every 50 milliseconds in a separate thread to not block the main thread events
+
+### 5. `shift_unseen_background(self)`
+  - this method checks if the first background image has gone out of view or not
+    - since the image and the window have a 600 pixel width, it checks if the top left corner of the first image is less than -602
+  - if it is, the image is shifted to the right side of the third image, basically by around (600*2) units, since that's the width of 2 images placed side to side
+    - this shift is also done to the `self.canvas_bg_images` list so that it is in sync with the visual order of the images
+    ```python
+    imgs = [2, 3, 4]
+    imgs.append(imgs.pop(0))
+    print(imgs)  # [3, 4, 2]
+    ```
+
+### 6. `init_bird(self)`
+  - draws the bird image onto the canvas at the location 200, 200
+  - `self.bird_canvas_image`: the bird's canvas image tag is stored in this
+  - defines the properties required for the gravity effect on the bird:
+    - `self.bird_velocity = 0`: the current velocity of the bird (amount of pixels that the bird is moved everytime `self.make_bird_fall()` is called)
+    - `self.terminal_velocity = 9.5`: maximum downwards velocity that the bird can reach
+    - `self.gravity_acceleration = 0.6`: the amount of pixels `self.bird_velocity` increases by every `self.gravity_interval` amount of milliseconds
+    - `self.gravity_interval = 15`: the amount of milliseconds after which the `self.make_brid_fall()` recursively calls itself (discussed later)
+    - `self.bottom_death_limit = (self.game_window_height - 30)`: defines the coordinates of the false 'ground' in the bottom of the screen at which the bird should die if it reaches this
+  - binds LEFT_CLICK and SPACEBAR to the `make_bird_hop()` (explained later) method, which is basically the jump the bird makes when the user clicks
+  - defines some properties used by the `idle_bird_animation()` method
+    - enables a continuous up and down motion when the round hasn't started. This is the bird's idle animation
+
+### 7. `idle_bird_animation(self)`
+  - a recursive method that runs in its own thread, running the idle animation of the bird when a round isn't going on
+  - makes the bird move up or down by 1 pixel on every call and stores the pixels moved till now 
+  - the way this animation works is, it keeps moving the bird up/down until it has been moved 30 pixels. Then it switches to the other direction and resets the pixel count to 0. Then counts till 30 again.
+  - this recursion is stopped by making the `self.idle_interrupt` boolean `True` while the thread is running
+  - runs every 20 milliseconds
+
+### 8. `make_bird_fall(self)`
+  - a recursive method that run its own thread while the boolean `self.gravity_enabled` is `True`
+  - if `self.gravity_enabled` is set to `False`, the thread stops immediately
+  - the logic of the gravity is pretty simple. when this function is called:
+    - `self.bird_velocity` increases by `self.gravity_acceleration` amount of pixels
+    - it is set to `self.terminal_velocity` in case it goes over the defined terminal velocity
+    - moves `self.bird_canvas_image` (the drawn bird image) in the y-direction by `self.bird_velocity` pixels
+    - calls itself after `self.gravity_interval` milliseconds in a separate thread using tkinter's `self.after(ms, func)` method
+  - basically, just like the real world, every moment the bird falls down slightly more than the previous instant
+    - at t=0ms, bird is at 200y, its velocity increases by 0.6 px
+    - at t=15ms, bird will be at 200y + velocity = 200.6y, velocity increases by the same amount again and becomes 1.2px
+    - at t=30ms, bird will be at 200.6y + velocity = 201.8y, velocity then becomes 1.2px + 0.6px = 1.8px
+    - at t=45ms, bird will now be at 201.8y + velocity = 203.6y and so on...
+  - runs every `self.gravity_interval` milliseconds
+
+### 9. `make_bird_hop(self)`
+  - this method is called whenever the user clicks on the screen or presses spacebar to make the bird jump/hop
+  - the velocity is set to a fixed negative value -> -10.5
+  - this means a constant upwards velocity is assigned to the bird, leading to a "jump" effect since the gravity is still active
+  - if `self.main_menu_screen` is `True`, this function will not run, since the bird should not hop while the main menu is active
+
+### 10. `init_mainmenu(self)`
+  - this method draws the widgets present in the main menu and stores their tags in class attributes:
+    - `self.play_button_canvas_image`: play button image
+    - `self.exit_button_canvas_image`: exit button image
+    - `self.highscore_canvas_label`: shows the current highscore on the main menu
+    - `self.logo_canvas_image`: the logo of the game
+  - calls `init_help()` method which draws the help image on the canvas, which will show up on the pre round screen
+  - binds mouse LEFT_CLICK event to button images to run their respective methods `self.new_game()` and `self.exit_game()`
+
+### 11. `hide_mainmenu(self)`
+  - hides the drawn main-menu widgets which include:
+    - the buttons, logo and the highscore label
+  - this is done by using the `state` property of canvas widgets which can changed to `'hidden'` to hide them
+
+### 12. `show_mainmenu(self)`
+  - shows the hidden main-menu widgets
+  - this is also done by using the `state` property of canvas widgets which can changed to `'normal'` to hide them
+  - the widgets are also brought above all the background widgets to make them visible
+
+### 13. `init_help(self)`
+  - draws the help image on the canvas, which will only be displayed on the pre round screen
+  - stores the image tag in `self.help_canvas_image` and makes it hidden by default
+  - the help image indicates the user what can be used to play the game. In our case, left mouse click and spacebar
+
+### 14. `show_help(self)`
+  - changes the `state` property of `self.help_canvas_image` to `'normal'` to show the widget, which was previously hidden
+
+### 15. `hide_help(self)`
+  - hides the help image by changing the `state` property of `self.help_canvas_image` to `'hidden'` to hide the widget
+
+### 16. `init_scoreboard(self)`
+  - draws the text widget displaying the current score at the top of the window
+  - stores its tag in `self.scoreboard`
+  - it displays the current value of `self.current_score` variable, which is by default 0 on the opening of the game
+
+### 17. `update_scoreboard(self)`
+  - changes the text of `self.scoreboard` to the current value of `self.current_score`
+
+### 18. `increment_score(self)`
+  - increases the `self.current_score` by 1 and calls `self.update_scoreboard()`
+
+### 19. `reset_score(self)`
+  - sets `self.current_score` to 0 and calls `self.update_scoreboard()`
+
+### 20. `init_pillars(self)`
+  - defines some properties related to the obstacles/pillars:
+    - `self.pillar_spawnpoint_x`: x coordinate of the first off-screen pillar in a new round
+    - `self.pillar_distance`: distance between 2 pillars' top left corners
+    - `self.pillar_height`: height of the pillar (also the image file's height)
+    - `self.pillar_hole_gap`: height of the gap between the top and bottom edges of 2 pillars through which the bird will pass
+    - `self.STANDARD_PILLAR_UP_Y`: the default y coordinate of the upper pillar, making the pillar hole gap lie exactly in the center of the game window
+    - `self.STANDARD_PILLAR_DOWN_Y`: the default y coordinate of the lower pillar, making the pillar hole gap lie exactly in the center of the game window
+
+
+  - 3 pairs of upper and lower pillars are spawned
+    - these pairs are shifted to their positions by calling `self.reset_pillars_to_initial_position()`, discussed below
+    - each pair of the pillars' tags are stored together in `self.canvas_pillar_images` as a tuple like `[(7,8), (9,10), (10,11)]`
+    - note: `self.canvas_pillar_images` stores each pair of pillars as 1 element in the form of a tuple and I mentioned this again for no reason. Anyways.
+
+### 21. `reset_pillars_to_initial_position(self)`
+  - when a new round is about to start, this method resets the position of the pair of pillars to their initial positions
+  - starting from the `self.pillar_spawnpoint_x` coordinate, these pairs are separated by `self.pillar_distance` pixels of distance
+  - a random value from -100 to 100 in the factor of 10 (-100, -90, ... 90, 100) is added to their y-coordinate
+    - this ensures randomness in the heights of hole gaps and makes the game challenging
+
+### 22. `shift_unseen_pillar(self)`
+  - similar to `shift_unseen_background()`
+    - it shifts the first pillar to `self.pillar_spawnpoint_x` and randomises the height again
+    - this gives an illusion of infinitely spawning pillars
+  - the shift is also done to the `self.canvas_pillar_images` list where the first element is appended at the last
+  - called by `self.keep_shifting_pillars()` whenever the first pillar goes off screen
+
+### 23. `keep_moving_pillars(self)`
+  - recursive method that runs in its own thread
+  - if `self.main_menu_screen` is `True`, this function will not run, since the obstacles should not move while the main menu is active
+  - when called, it moves all the pairs of pillars towards the left by 3 pixels
+  - runs every 10 milliseconds
+
+### 24. `keep_shifting_pillars(self)`
+  - recursive function that runs in its own thread
+  - if `self.main_menu_screen` is `True`, this function will not run, since the obstacles should not be shifted at all while the main menu is active
+  - it checks whether the first pillar has gone off-screen or not
+    - if it has, it calls `self.shift_unseen_pillar()` to shift the first pillar to the right end of the queue both visually and the `self.canvas_pillar_images` list, as explained before
+  - this method basically keeps shifting the pillars as soon as the first pillar goes out of vision to give an illusion of infinitely spawning pillars
+  - since it uses the same 3 pillars drawn at the start of the program, there is no need for the canvas to keep drawing and deleting pillar images
+  - runs every 50 milliseconds
+
+### 25. `lose_game(self)`
+  - this method is called when the player loses due to collision of the bird with the ground, off screen pillar or the on screen pillar
+  - `self.main_menu_screen` is set to `True`
+  - these methods are called:
+    - `self.disable_gravity()`: switch off gravity on the bird
+    - `self.backend.update_highscore_in_file(self.current_score)`: update highscore in the highscore text file, if applicable
+    - `self.show_mainmenu()`: shows main menu
+  - the `self.scoreboard` canvas image is brought in front of all the other widgets
+  - left click and spacebar events get disabled to disallow accidental bird hops
+
+### 26. `new_game(self)`
+  - called when the player presses the PLAY button the main menu
+  - represents the Pre-Round stage of the game
+  - `self.main_menu_screen` set to `False`
+  - when the user starts the game, the scoreboard is initially hidden. this method makes it visible and the scoreboard then remains visible until the game is closed
+  - these methods are called:
+    - `self.reset_score()`: set the score to 0
+    - `self.reset_pillars_to_initial_position()`: reset the obstacles for a new round
+    - `self.show_help()`: shows the image widget indicating the controls of the game, since this is pre-round
+    - `self.idle_bird_animation()`: starts the idle bird animation
+  - the left click and spacebar events are binded to `self.start_game()`
+    - `self.bird_canvas_image` which is the drawn bird image, is moved to its initial position (200, 200)
+
+### 27. `start_game(self)`
+  - this method is called when the user starts the round via mouse click or spacebar in the pre round stage
+  - these methods are called:
+    - `self.hide_help()`: the help image is hidden
+    - `self.enable_gravity()`: switch on the gravity on the bird
+    - `self.keep_moving_pillars()`: start moving the obstacles/pillars
+    - `self.keep_shifting_pillars()`: start the infinite obstacle effect
+    - `self.keep_checking_if_player_lost()`: a recursive method that will be discussed later, checks if the bird collided anywhere
+    - `self.make_bird_hop()`: since the left click and space bar events aren't binded to the bird_hop function yet, the trigger won't make the bird jump. Therefore this function is called manually to give the initial jump to the bird.
+  - left click and keyboard events are again binded to `self.make_bird_hop()`
+  - `self.idle_interrupt` is set to `True` since the bird's idle animation is active during the pre round
+    - this stops the `self.idle_bird_animation()` recursive thread
+
+### 28. `exit_game(self)`
+  - the scoreboard widget is deleted manually
+    - this has been done to avoid a weird tkinter `alloc` error
+  - the game window is destroyed after 800 milliseconds
+
+### 29. `check_pillar_for_score(self)`
+  - checks if the bird has crossed a pillar
+  - if it has, it will now check whether the bird is currently flying higher than the game window
+    - if it is flying higher, this means the bird should collide with the offscreen upper pillar
+      - therefore it returns `True` (this will be used in `self.keep_checking_if_player_lost()`, discussed below)
+    - else, call `self.increment_scoreboard()` to increase the score
+
+### 30. `keep_checking_if_player_lost(self)`
+  - this is a recursive method that run in its own thread
+  - it has two purposes:
+    - check if player lost
+    - increase score if player passed a pillar
+  - it first calls `self.check_pillar_for_score()` and keeps track of its return value in a local variable
+    - if it returns `True` this means the player collided with an off screen pillar
+    - therefore, `self.lose_game()` is called and the thread ends here
+    - otherwise, nothing happens
+  - next, to see if the bird collided with any pillar, a method `find_overlapping(*args)` of class `tk.Canvas` is utilised
+    - the coordinates of the top-left corner (x1, y1) and the bottom-right corner (x2, y2) of the rectangle surrounding the `self.bird_canvas_image` are stored
+    - the `find_overlapping` method returns a list of all the tags of the widgets that are currently coinciding with the passed widget tag (in this case, the bird image)
+    - in our case, the background images are always overlapping with the bird visually, so they should be ignored
+    - the way I implemented this is:
+      - if the sum of the tags (which are unqiue integers) is greater than 10, this implies the bird collided with any of the pillars, therefore `self.lose_game()` is called and the thread ends here
+      - otherwise, the bird is safe
+    - the reason this works is because firstly, I noticed that the tags of the background images are always 2, 3 and 4 and the pillars go from 7 to 12.
+      - when the bird isn't colliding with the pillars, the possible list values returned by the `find_overlapping()` function are like:
+        - `[1, 2], [1, 3], [1, 4]` or sometimes rarely `[1, 2, 3], [1, 3, 4], [1, 4, 2]`
+        - notice, the sums of all these lists is always less than 10
+        - since the pillars' tags go from 7 to 12, if any one of them gets added to the returned list, the sum always exceeds 10
+
+
+  - this method runs every 10 milliseconds. Due to its super fast interval, I had to find a way which won't take up too much time or processing to see whether the bird collided with any pillars. This is why I adopted the easy `sum(tags_list) > 10` approach. Quick and efficient.
+
+### 31. `disable_gravity(self)`
+  - `self.gravity_enabled` is set to `False`
+  - this automatically stops the `self.make_bird_fall()` recursive thread if it's running currently
+
+### 32. `enable_gravity(self)`
+  - `self.gravity_enabled` is set to `True`
+  - `self.make_bird_fall()` is called, which starts a new thread controlling the bird's gravity
+

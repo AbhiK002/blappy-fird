@@ -38,10 +38,10 @@ class Backend:
         self.game_pillar_up_image = self.DEFAULT_PILLAR_UP
         self.game_pillar_down_image = self.DEFAULT_PILLAR_DOWN
 
-        self.play_button = self.PLAY_BUTTON
-        self.exit_button = self.EXIT_BUTTON
-        self.help = self.HELP
-        self.logo = self.LOGO
+        self.game_play_button_image = self.PLAY_BUTTON
+        self.game_exit_button_image = self.EXIT_BUTTON
+        self.game_help_image = self.HELP
+        self.game_logo_image = self.LOGO
 
         self.user_has_windows = True if "win" in platform.system().lower() else False
 
@@ -140,8 +140,8 @@ class Backend:
 
     def get_buttons_images(self) -> list[PhotoImage] | None:
         try:
-            img1 = PhotoImage(file=self.play_button)
-            img2 = PhotoImage(file=self.exit_button)
+            img1 = PhotoImage(file=self.game_play_button_image)
+            img2 = PhotoImage(file=self.game_exit_button_image)
             return [img1, img2]
         except Exception:
             print("buttons images don't exist")
@@ -149,13 +149,13 @@ class Backend:
 
     def get_logo_image(self):
         try:
-            return PhotoImage(file=self.logo)
+            return PhotoImage(file=self.game_logo_image)
         except:
             return None
 
     def get_help_image(self):
         try:
-            return PhotoImage(file=self.help)
+            return PhotoImage(file=self.game_help_image)
         except:
             return None
 
