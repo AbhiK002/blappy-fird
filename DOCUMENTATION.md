@@ -2,9 +2,17 @@
 A remake by Abhineet Kelley of the classic game Flappy Bird, for a fun learning experience
 
 # 1. Introduction
-Welcome to Blappy Fird, a remake of the classic game 'Flappy Bird' with a few more features like customisable backgrounds, etc. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
+Welcome to Blappy Fird, a clone of the classic game 'Flappy Bird'. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
 
-(user documentation to be added here)
+## 1.1 Download
+To download Blappy Fird and play it, go to the latest [Releases tab here](https://github.com/AbhiK002/blappy-fird/releases/latest) and download the ZIP file.
+Extract it and play the game by running the EXE file inside that extracted folder.  
+
+- If you want to run the python file `main.py` directly, then you can install the Python programming language in your computer from [Python's official site](https://www.python.org/downloads/), download the repository as a ZIP file, extract the ZIP file and run `main.py` to play the game.
+- You can also clone the repository by running this command in an empty folder:
+```git
+git clone https://github.com/AbhiK002/blappy-fird.git
+```
 
 # 2. About the Game
 ## 2.1 Rules
@@ -19,7 +27,7 @@ The rules are simple:
 ### 2.1.1 Extra features
 - None yet, will be added soon
 
-# 3. Technical Details
+# 3. Technical Details (for developers)
 Blappy Fird has been made using the Python language and tkinter has been used for the GUI of the game. I used tkinter because the game doesn't have advanced graphics or mechanisms that require complex frameworks like PyQt5.
 
 ## 3.1 Libraries/Modules Used
@@ -73,7 +81,7 @@ Details about each file/folder:
 
 After the game has been converted into an exe file, the 2 python files will become 1 exe file instead. Also, the default images will get embedded into the exe file itself so that the game doesn't crash in case it doesn't find any of the image files/assets.
 
-# 4. How Blappy Fird Works
+# 4. How Blappy Fird Works  (for developers)
 ### 4.0.1 Overview
 Blappy Fird is a fun little game and therefore has a simple working mechanism. It basically has 3 states/scenes:
 - Main Menu
@@ -317,7 +325,7 @@ Before I go into detail, here's an overview of how the game works:
 This is pretty much it. Now going into the details, the next section will explain each method present in the game.
 
 
-# 5. Detailed Code Documentation
+# 5. Detailed Code Documentation (for developers)
 This section will list all the methods present in both the classes `App` and `Backend`, and explain what all they do.
 ## 5.1 `main.py`: class `App`
 ### 0. `__init__(self)`
