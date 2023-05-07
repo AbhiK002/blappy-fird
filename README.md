@@ -1,8 +1,13 @@
-# Blappy Fird
+<p align='center'>
+<img src='https://user-images.githubusercontent.com/68178267/236674506-59f01fa5-6f53-4667-936b-3f5cbad0499e.png' height=64>
+
+<h1 align='center'> Blappy Fird </h1>
 A remake by Abhineet Kelley of the classic game Flappy Bird, for a fun learning experience
 
 # 1. Introduction
 Welcome to Blappy Fird, a clone of the classic game 'Flappy Bird'. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
+![image](https://user-images.githubusercontent.com/68178267/236674414-c7abc771-2f6e-491f-a28b-d344ee8dd150.png)
+
 
 ## 1.1 Download
 To download Blappy Fird and play it, go to the latest [Releases tab here](https://github.com/AbhiK002/blappy-fird/releases/latest) and download the ZIP file.
@@ -24,8 +29,12 @@ The rules are simple:
 - If you touch the ground or any obstacle, you lose
 - Reach the highest score you can
 
+![image](https://user-images.githubusercontent.com/68178267/236674618-0292087a-0cae-4562-9926-7d9056d795f9.png)
+
+
 ### 2.1.1 Extra features
 - None yet, will be added soon
+
 
 # 3. Technical Details (for developers)
 Blappy Fird has been made using the Python language and tkinter has been used for the GUI of the game. I used tkinter because the game doesn't have advanced graphics or mechanisms that require complex frameworks like PyQt5.
