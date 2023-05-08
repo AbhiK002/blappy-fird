@@ -357,8 +357,8 @@ This section will list all the methods present in both the classes `App` and `Ba
   - note: `self` is an instance of `App` class, which inherits from `tk.Tk` parent class, therefore making `self` an instance of `tk.Tk` as well. This means you can configure the main game window via `self` itself
   - this method configures the game window:
     - title set to "Blappy Fird"
-    - resiable property set to False
-    - title bar iconfile added
+    - resizable property set to False
+    - title bar icon added
     - class attributes that will be used later are defined:
       - `self.game_window_width`: 600
       - `self.game_window_height`: 500
@@ -366,7 +366,7 @@ This section will list all the methods present in both the classes `App` and `Ba
         - it is stretched to fit the entire window and is the only widget present in the window
         - all the images will be drawn inside the canvas itself
     - ensures the game window spawns in the center of the screen
-      - done by getting the user's screen dimensions and configuring `self.geometry` to
+      - done by getting the user's screen dimensions and configuring `self.geometry` accordingly
 
 ### 3. `init_background(self)`
   - 3 background images placed side to side are drawn onto the canvas
@@ -513,7 +513,7 @@ This section will list all the methods present in both the classes `App` and `Ba
   - runs every 10 milliseconds
 
 ### 24. `keep_shifting_pillars(self)`
-  - recursive function that runs in its own thread
+  - recursive method that runs in its own thread
   - if `self.main_menu_screen` is `True`, this function will not run, since the obstacles should not be shifted at all while the main menu is active
   - it checks whether the first pillar has gone off-screen or not
     - if it has, it calls `self.shift_unseen_pillar()` to shift the first pillar to the right end of the queue both visually and the `self.canvas_pillar_images` list, as explained before
@@ -554,8 +554,7 @@ This section will list all the methods present in both the classes `App` and `Ba
     - `self.keep_checking_if_player_lost()`: a recursive method that will be discussed later, checks if the bird collided anywhere
     - `self.make_bird_hop()`: since the left click and space bar events aren't binded to the bird_hop function yet, the trigger won't make the bird jump. Therefore this function is called manually to give the initial jump to the bird.
   - left click and keyboard events are again binded to `self.make_bird_hop()`
-  - `self.idle_interrupt` is set to `True` since the bird's idle animation is active during the pre round
-    - this stops the `self.idle_bird_animation()` recursive thread
+  - `self.idle_interrupt` is set to `True` since the bird's idle animation is active during the pre round, which stops the `self.idle_bird_animation()` recursive thread
 
 ### 28. `exit_game(self)`
   - the scoreboard widget is deleted manually
@@ -570,7 +569,7 @@ This section will list all the methods present in both the classes `App` and `Ba
     - else, call `self.increment_scoreboard()` to increase the score
 
 ### 30. `keep_checking_if_player_lost(self)`
-  - this is a recursive method that run in its own thread
+  - this is a recursive method that runs in its own thread
   - it has two purposes:
     - check if player lost
     - increase score if player passed a pillar
@@ -580,19 +579,26 @@ This section will list all the methods present in both the classes `App` and `Ba
     - otherwise, nothing happens
   - next, to see if the bird collided with any pillar, a method `find_overlapping(*args)` of class `tk.Canvas` is utilised
     - the coordinates of the top-left corner (x1, y1) and the bottom-right corner (x2, y2) of the rectangle surrounding the `self.bird_canvas_image` are stored
-    - the `find_overlapping` method returns a list of all the tags of the widgets that are currently coinciding with the passed widget tag (in this case, the bird image)
+    - using these coordinates, the coordinates of 2 smaller rectangles that cover the bird's visual body and beak are derived, for accurate deaths due to collision. This is done so that the bird doesn't die due to invisible collisions (where the bird doesn't touch the obstacle visually, but its rectangle does)
+      ```python
+      x1, y1, x2, y2 = self.canvas.bbox(self.bird_canvas_image)  # main rectangle containing the entire bird image
+      rectangle_of_body = (x1+7, y1, x2-16, y2-1)  # 32x42 rectangle
+      rectangle_of_beak = (x1+7+32, y1+18, x2, y2-1)  # 16x24 rectangle
+      ```
+      (ADD AN IMAGE HERE)
+    - the `tk.Canvas.find_overlapping(*args)` method returns a list of all the tags of the widgets that are currently coinciding with the passed rectangle coordinates (in this case, the rectangles we made)
     - in our case, the background images are always overlapping with the bird visually, so they should be ignored
     - the way I implemented this is:
-      - if the sum of the tags (which are unqiue integers) is greater than 10, this implies the bird collided with any of the pillars, therefore `self.lose_game()` is called and the thread ends here
+      - if the sum of the tags (which are unique integers) is greater than 10, this implies the bird collided with any of the pillars, therefore `self.lose_game()` is called and the thread ends here
       - otherwise, the bird is safe
-    - the reason this works is because firstly, I noticed that the tags of the background images are always 2, 3 and 4 and the pillars go from 7 to 12.
+    - the reason this works is that firstly, I noticed that the tags of the background images are always 2, 3 and 4 and the pillars go from 7 to 12.
       - when the bird isn't colliding with the pillars, the possible list values returned by the `find_overlapping()` function are like:
         - `[1, 2], [1, 3], [1, 4]` or sometimes rarely `[1, 2, 3], [1, 3, 4], [1, 4, 2]`
         - notice, the sums of all these lists is always less than 10
         - since the pillars' tags go from 7 to 12, if any one of them gets added to the returned list, the sum always exceeds 10
 
 
-  - this method runs every 10 milliseconds. Due to its super fast interval, I had to find a way which won't take up too much time or processing to see whether the bird collided with any pillars. This is why I adopted the easy `sum(tags_list) > 10` approach. Quick and efficient.
+  - this method runs every 10 milliseconds. Due to its superfast interval, I had to find a way which won't take up too much time or processing to see whether the bird collided with any pillars. This is why I adopted the easy `sum(tags_list) > 10` approach. Quick and efficient.
 
 ### 31. `disable_gravity(self)`
   - `self.gravity_enabled` is set to `False`
