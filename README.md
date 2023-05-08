@@ -144,7 +144,7 @@ class App(tk.Tk):
 if __name__ == '__main__':
     App()
 ```
-I decided to inherit from the Tk class instead of making a `self.root = tk.Tk()` object and using it throughout the class because I have no idea, it just looks cooler.
+I inherited from the Tk class instead of making a `self.root = tk.Tk()` object and using it throughout the class because I have no idea, it just looks cooler. Jokes apart, I did this so that the `App` class acts like a `tk.Tk` window itself.
 
 1 small advantage can be, writing `self.geometry` is easier than `self.root.geometry` since I don't have to type root again and again. But the difference isn't significant. Anyways moving on, the `__init__()` method of `App` is called.
 
@@ -644,9 +644,7 @@ Now, we discuss each method of class `Backend`
     - if the `content` string doesn't only contain numbers, the score is invalid and therefore "0" is written into the file
     - in case it does contain only numbers,
       - `content` is converted into an integer by using `int(content)`
-      - if that integer is above 1500, the player is a God apparently and has spent a lot of time on the game (or changed the text file manually)
-        - `self.current_highscore_in_file` is set to `"GOD???"`
-      - if it is above 100000, the player is a Cheater.
+      - if it is above 5000, the player is a Cheater, most probably.
         - `self.current_highscore_in_file` is set to `"CHEATER"`
       - these string values will be displayed to the user in the GUI later on >:)
       - else, `self.current_highscore_in_file` is set to the integer itself which was the high score of the player last time they played Blappy Fird
@@ -654,13 +652,12 @@ Now, we discuss each method of class `Backend`
 ### 5. `update_highscore_in_file(self, score: int)`
   - if `self.current_highscore_in_file` is set to the God or Cheater string values, stop the function here
   - if the given argument `score` is less than or equal to the integer value of `self.current_highscore_in_file`, that means the player hasn't beaten the current highscore. the function stops here
-  - otherwise, the `self.check_game_directory()` is called and the `score` is written into the file
-    - implying the player beat their highscore
+  - otherwise, the `self.check_game_directory()` is called and the `score` is written into the file, implying the player beat their highscore
   - `self.current_highscore_in_file` is set to the string form of `score`
 
 ### 6. `get_current_highscore(self)`
   - returns the string `self.current_highscore_in_file`
-  - this string will be displayed in the GUI of the game in the `self.highscore_canvas_label` if you remember.
+  - this string will be displayed in the GUI of the game in the `self.highscore_canvas_label` of class `App` in `main.py` if you remember.
 
 ### 7. `get_current_bg_image(self)`
   - returns the `PhotoImage` object of `self.game_background_image`

@@ -4,6 +4,13 @@ import backend
 
 
 class App(tk.Tk):
+    """
+    This class contains the code of the GUI of the game Blappy Fird.
+    I inherited from the Tk class instead of making a `self.root = tk.Tk()`
+    object and using it throughout the class because I have no idea, it just looks cooler.
+
+    Jokes apart, I did this so that the `App` class acts like a `tk.Tk` window itself.
+    """
     def __init__(self):
         super().__init__()  # creates a Tk window
 
