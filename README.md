@@ -585,7 +585,8 @@ This section will list all the methods present in both the classes `App` and `Ba
       rectangle_of_body = (x1+7, y1, x2-16, y2-1)  # 32x42 rectangle
       rectangle_of_beak = (x1+7+32, y1+18, x2, y2-1)  # 16x24 rectangle
       ```
-      (ADD AN IMAGE HERE)
+      ![1_bird - Copy](https://user-images.githubusercontent.com/68178267/236872192-c7472468-221f-4b41-a90d-89cf9af05912.png)
+
     - the `tk.Canvas.find_overlapping(*args)` method returns a list of all the tags of the widgets that are currently coinciding with the passed rectangle coordinates (in this case, the rectangles we made)
     - in our case, the background images are always overlapping with the bird visually, so they should be ignored
     - the way I implemented this is:
