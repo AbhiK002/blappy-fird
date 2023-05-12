@@ -4,6 +4,27 @@
 <h1 align='center'> Blappy Fird </h1>
 A remake by Abhineet Kelley of the classic game Flappy Bird, for a fun learning experience
 
+# Index
+- [Introduction](https://github.com/AbhiK002/blappy-fird#1-introduction)
+  - [Download](https://github.com/AbhiK002/blappy-fird#11-download)
+
+- [About the Game](https://github.com/AbhiK002/blappy-fird#2-about-the-game)
+  - [Rules](https://github.com/AbhiK002/blappy-fird#21-rules)
+- [Technical Details (for developers)](https://github.com/AbhiK002/blappy-fird#3-technical-details-for-developers)
+  - [Libraries/Modules Used](https://github.com/AbhiK002/blappy-fird#31-librariesmodules-used)
+  - [Game Directory Structure](https://github.com/AbhiK002/blappy-fird#32-game-directory-structure)
+    - [Code Structure](https://github.com/AbhiK002/blappy-fird#321-code-structure)
+- [How Blappy Fird Works](https://github.com/AbhiK002/blappy-fird#4-how-blappy-fird-works--for-developers)
+  - [Starting the Game](https://github.com/AbhiK002/blappy-fird#41-starting-the-game)
+    - [Run main.py](https://github.com/AbhiK002/blappy-fird#411-run-mainpy)
+    - [Inside backend.py](https://github.com/AbhiK002/blappy-fird#412-inside-backendpy)
+  - [Running the Game](https://github.com/AbhiK002/blappy-fird#42-running-the-game)
+    - [Summary](https://github.com/AbhiK002/blappy-fird#421-summary)
+- [Detailed Code Documentation (for developers)](https://github.com/AbhiK002/blappy-fird#5-detailed-code-documentation-for-developers)
+  - [`main.py`: class `App`](https://github.com/AbhiK002/blappy-fird#51-mainpy-class-app)
+  - [`backend.py`: class `Backend`](https://github.com/AbhiK002/blappy-fird#52-backendpy-class-backend)
+- [Conclusion](https://github.com/AbhiK002/blappy-fird#6-conclusion)
+
 # 1. Introduction
 Welcome to Blappy Fird, a clone of the classic game 'Flappy Bird'. I made this game mostly for fun, but to also get an idea of how a project is carried out in the real world with documentation and other important stuff.
 ![image](https://user-images.githubusercontent.com/68178267/236674414-c7abc771-2f6e-491f-a28b-d344ee8dd150.png)
