@@ -5,7 +5,7 @@ import platform
 import sys
 
 
-def resource_path(relative_path):
+def resource_path(relative_path: Path):
     """
 - This function returns the absolute path from a given relative path of a file/folder
 - However, here it has been defined to facilitate embedding asset files into the bundled EXE file made using `pyinstaller` module
@@ -17,7 +17,7 @@ def resource_path(relative_path):
 
     try:
         base_path = sys._MEIPASS
-    except Exception:
+    except AttributeError:
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
@@ -220,7 +220,7 @@ Calls `self.create_highscore_file_if_not_exists()`
             img2 = PhotoImage(file=self.DEFAULT_PILLAR_DOWN)
             return [img1, img2]
 
-    def get_buttons_images(self) -> list[PhotoImage] | None:
+    def get_buttons_images(self) -> tuple[PhotoImage, PhotoImage]:
         """
 - returns the `PhotoImage` objects of `self.game_play_button_image` and `self.game_exit_button_image` as a list
 - in case of an error, returns  the `PhotoImage` objects of `self.PLAY_BUTTON` and `self.EXIT_BUTTON`
@@ -228,12 +228,11 @@ Calls `self.create_highscore_file_if_not_exists()`
         try:
             img1 = PhotoImage(file=self.game_play_button_image)
             img2 = PhotoImage(file=self.game_exit_button_image)
-            return [img1, img2]
         except Exception:
             print("buttons images don't exist")
             img1 = PhotoImage(file=self.PLAY_BUTTON)
             img2 = PhotoImage(file=self.EXIT_BUTTON)
-            return [img1, img2]
+        return img1, img2
 
     def get_logo_image(self):
         """
@@ -254,4 +253,3 @@ Calls `self.create_highscore_file_if_not_exists()`
             return PhotoImage(file=self.game_help_image)
         except:
             return PhotoImage(file=self.HELP)
-
