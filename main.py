@@ -20,7 +20,7 @@ class App(tk.Tk):
         self.backend = backend.Backend()
 
         self.canvas_bg_images : list[int] = []
-        self.canvas_pillar_images: list[list[int, int]] = []
+        self.canvas_pillar_images: list[tuple[int, int]] = []
         self.current_score = 0
 
         self.store_currently_used_assets()
@@ -483,7 +483,7 @@ Defines some properties related to the obstacles/pillars:
             pillar_up = self.canvas.create_image(0, 0, image=self.pillar_up_image)
             pillar_down = self.canvas.create_image(0, 0, image=self.pillar_down_image)
 
-            self.canvas_pillar_images.append([pillar_up, pillar_down])
+            self.canvas_pillar_images.append((pillar_up, pillar_down))
 
         self.reset_pillars_to_initial_position()
 
